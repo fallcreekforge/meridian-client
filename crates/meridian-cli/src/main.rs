@@ -3,7 +3,7 @@ use clap::{
    Subcommand,
 };
 
-/// Customer-side Meridian commands.
+/// Meridian Client commands.
 #[derive(Debug, Parser)]
 #[command(name = "meridian", version, about)]
 struct Cli {

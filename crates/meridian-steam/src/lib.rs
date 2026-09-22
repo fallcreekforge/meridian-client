@@ -21,7 +21,7 @@ pub enum SteamError {
    GamesUnavailable,
 }
 
-/// Narrow Steam capabilities needed by Meridian's local sync engine.
+/// Narrow Steam capabilities needed by Meridian Client's local sync engine.
 pub trait SteamClient {
    /// Returns the studio's games.
    ///
