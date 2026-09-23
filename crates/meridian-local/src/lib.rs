@@ -62,6 +62,7 @@ mod tests {
       CredentialKey,
       CredentialStore,
       CredentialStoreError,
+      ExposeSecret,
       SecretString,
    };
    use meridian_platform::PlatformGame;
@@ -82,8 +83,8 @@ mod tests {
 
    impl CredentialStore for TestCredentialStore {
       fn get(&self, key: &CredentialKey) -> Result<SecretString, CredentialStoreError> {
-         assert_eq!(key.as_str(), "steam.test");
-         Ok(SecretString::new("test-api-key"))
+         assert_eq!(key, &CredentialKey::SteamIPartnerFinancialsService);
+         Ok(SecretString::from("test-api-key"))
       }
    }
 
@@ -101,7 +102,10 @@ mod tests {
 
    #[test]
    fn sync_engine_produces_a_versioned_envelope() {
-      let steam = SteamSource::new(TestSteamClient, CredentialKey::new("steam.test"));
+      let steam = SteamSource::new(
+         TestSteamClient,
+         CredentialKey::SteamIPartnerFinancialsService,
+      );
       let envelope = SyncEngine::new(TestCredentialStore, steam)
          .sync(StudioId::new("studio_test"))
          .expect("test synchronization should succeed");
