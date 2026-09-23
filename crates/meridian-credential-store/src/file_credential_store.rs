@@ -35,7 +35,7 @@ impl CredentialStore for FileCredentialStore {
 
       println!("Opening secret file: {}", path.display());
 
-      if path
+      if !path
          .extension()
          .and_then(|ext| ext.to_str())
          .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
