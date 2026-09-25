@@ -1,5 +1,6 @@
 //! Platform-neutral data collection inside the customer environment.
 
+use async_trait::async_trait;
 use meridian_credential_store::CredentialStore;
 use meridian_types::PlatformGameId;
 
@@ -17,13 +18,14 @@ pub struct PlatformGame {
 }
 
 /// Capabilities local synchronization requires from a platform integration.
+#[async_trait]
 pub trait PlatformClient {
    type Error;
 
    fn platform(&self) -> Platform;
 
-   fn discover_games(
+   async fn discover_games(
       &self,
-      credentials: &dyn CredentialStore,
+      credentials: &(dyn CredentialStore + Send + Sync),
    ) -> Result<Vec<PlatformGame>, Self::Error>;
 }

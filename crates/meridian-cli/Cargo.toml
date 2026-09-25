@@ -11,7 +11,10 @@ name = "meridian"
 path = "src/main.rs"
 
 [dependencies]
-clap.workspace = true
+meridian-credential-store.workspace = true
 
+clap.workspace       = true
+serde.workspace      = true
+serde_json.workspace = true
 [lints]
 workspace = true
