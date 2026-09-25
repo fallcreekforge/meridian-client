@@ -18,7 +18,7 @@ use crate::{
 
 /// Credentials loaded from a customer-controlled configuration file.
 pub struct FileCredentialStore {
-   secret_file_path: PathBuf,
+   pub secret_file_path: PathBuf,
 }
 
 impl FileCredentialStore {

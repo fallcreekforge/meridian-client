@@ -127,6 +127,7 @@ name = "meridian-cli"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "meridian-credential-store",
  "serde",
  "serde_json",
 ]
