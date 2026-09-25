@@ -4,6 +4,7 @@
 
 use std::io;
 
+use async_trait::async_trait;
 pub use secrecy::{
    ExposeSecret,
    SecretString,
@@ -16,7 +17,7 @@ mod secret_config;
 pub use file_credential_store::FileCredentialStore;
 
 /// Identifies a credential without exposing its value.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CredentialKey {
    SteamIPartnerFinancialsService,
    MeridianCloud,
@@ -39,6 +40,7 @@ pub enum CredentialStoreError {
 
 /// Retrieves credentials held inside studio-controlled infrastructure,
 /// returning an owned `SecretString`.
+#[async_trait]
 pub trait CredentialStore {
-   fn get(&self, key: &CredentialKey) -> Result<SecretString, CredentialStoreError>;
+   async fn get(&self, key: CredentialKey) -> Result<SecretString, CredentialStoreError>;
 }

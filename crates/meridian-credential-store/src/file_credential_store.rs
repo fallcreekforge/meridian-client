@@ -6,6 +6,7 @@ use std::{
    path::PathBuf,
 };
 
+use async_trait::async_trait;
 use secrecy::SecretString;
 use serde_json::from_reader;
 
@@ -29,8 +30,11 @@ impl FileCredentialStore {
    }
 }
 
+#[async_trait]
 impl CredentialStore for FileCredentialStore {
-   fn get(&self, key: &CredentialKey) -> Result<SecretString, CredentialStoreError> {
+   async fn get(&self, key: CredentialKey) -> Result<SecretString, CredentialStoreError> {
+      // TODO: Change these to be asynchronous operations
+
       let path = &self.secret_file_path;
 
       println!("Opening secret file: {}", path.display());
@@ -51,12 +55,12 @@ impl CredentialStore for FileCredentialStore {
       let config: SecretConfig = from_reader(reader)?;
 
       match key {
-         &CredentialKey::SteamIPartnerFinancialsService => {
+         CredentialKey::SteamIPartnerFinancialsService => {
             Ok(SecretString::from(
                config.steam_ipartner_financials_service_key,
             ))
          },
-         &CredentialKey::MeridianCloud => Ok(SecretString::from(config.meridian_cloud_key)),
+         CredentialKey::MeridianCloud => Ok(SecretString::from(config.meridian_cloud_key)),
       }
    }
 }

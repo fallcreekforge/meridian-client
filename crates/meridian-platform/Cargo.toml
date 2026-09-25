@@ -7,8 +7,10 @@ license.workspace      = true
 repository.workspace   = true
 
 [dependencies]
+async-trait.workspace = true
 meridian-credential-store.workspace = true
 meridian-types.workspace            = true
+tokio.workspace = true
 
 [lints]
 workspace = true

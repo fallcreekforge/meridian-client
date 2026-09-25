@@ -1,5 +1,8 @@
 //! Steam data access inside the customer environment.
 
+use std::marker::Sync;
+
+use async_trait::async_trait;
 use meridian_credential_store::{
    CredentialKey,
    CredentialStore,
@@ -13,6 +16,10 @@ use meridian_platform::{
 };
 use thiserror::Error;
 
+pub mod web_api_client;
+
+pub use web_api_client::SteamHttpClient;
+
 #[derive(Debug, Error)]
 pub enum SteamError {
    #[error(transparent)]
@@ -22,20 +29,27 @@ pub enum SteamError {
 }
 
 /// Narrow Steam capabilities needed by Meridian Client's local sync engine.
+#[async_trait]
 pub trait SteamClient {
    /// Returns the studio's games.
    ///
    /// Implementations must never log `api_key` or include it in errors.
-   fn discover_games(&self, api_key: &SecretString) -> Result<Vec<PlatformGame>, SteamError>;
+   async fn discover_games(&self, api_key: &SecretString) -> Result<Vec<PlatformGame>, SteamError>;
 }
 
 /// Connects a typed Steam client to the platform-neutral collection contract.
-pub struct SteamSource<C> {
+pub struct SteamSource<C>
+where
+   C: Send + Sync,
+{
    client:         C,
    credential_key: CredentialKey,
 }
 
-impl<C> SteamSource<C> {
+impl<C> SteamSource<C>
+where
+   C: Send + Sync,
+{
    #[must_use]
    pub fn new(client: C, credential_key: CredentialKey) -> Self {
       Self {
@@ -45,9 +59,10 @@ impl<C> SteamSource<C> {
    }
 }
 
+#[async_trait]
 impl<C> PlatformClient for SteamSource<C>
 where
-   C: SteamClient,
+   C: SteamClient + Send + Sync,
 {
    type Error = SteamError;
 
@@ -55,12 +70,12 @@ where
       Platform::Steam
    }
 
-   fn discover_games(
+   async fn discover_games(
       &self,
-      credentials: &dyn CredentialStore,
+      credentials: &(dyn CredentialStore + Send + Sync),
    ) -> Result<Vec<PlatformGame>, Self::Error> {
-      let api_key = credentials.get(&self.credential_key)?;
+      let api_key = credentials.get(self.credential_key).await?;
 
-      self.client.discover_games(&api_key)
+      self.client.discover_games(&api_key).await
    }
 }

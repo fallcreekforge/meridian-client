@@ -19,7 +19,7 @@ pub struct SyncEngine<S, C> {
 
 impl<S, C> SyncEngine<S, C>
 where
-   S: CredentialStore,
+   S: CredentialStore + Send + Sync,
    C: PlatformClient,
 {
    #[must_use]
@@ -31,11 +31,12 @@ where
    }
 
    /// Collects and normalizes local data into the public protocol.
-   pub fn sync(&self, studio_id: StudioId) -> Result<SyncEnvelopeV1, C::Error> {
+   pub async fn sync(&self, studio_id: StudioId) -> Result<SyncEnvelopeV1, C::Error> {
       let platform = protocol_platform(self.platform_client.platform());
       let games = self
          .platform_client
-         .discover_games(&self.credential_store)?
+         .discover_games(&self.credential_store)
+         .await?
          .into_iter()
          .map(|game| {
             GameV1 {
@@ -58,11 +59,12 @@ const fn protocol_platform(platform: Platform) -> GamePlatformV1 {
 
 #[cfg(test)]
 mod tests {
+   use async_trait::async_trait;
    use meridian_credential_store::{
       CredentialKey,
       CredentialStore,
       CredentialStoreError,
-      ExposeSecret,
+      ExposeSecret as _,
       SecretString,
    };
    use meridian_platform::PlatformGame;
@@ -81,17 +83,22 @@ mod tests {
 
    struct TestCredentialStore;
 
+   #[async_trait]
    impl CredentialStore for TestCredentialStore {
-      fn get(&self, key: &CredentialKey) -> Result<SecretString, CredentialStoreError> {
-         assert_eq!(key, &CredentialKey::SteamIPartnerFinancialsService);
+      async fn get(&self, key: CredentialKey) -> Result<SecretString, CredentialStoreError> {
+         assert_eq!(key, CredentialKey::SteamIPartnerFinancialsService);
          Ok(SecretString::from("test-api-key"))
       }
    }
 
    struct TestSteamClient;
 
+   #[async_trait]
    impl SteamClient for TestSteamClient {
-      fn discover_games(&self, api_key: &SecretString) -> Result<Vec<PlatformGame>, SteamError> {
+      async fn discover_games(
+         &self,
+         api_key: &SecretString,
+      ) -> Result<Vec<PlatformGame>, SteamError> {
          assert_eq!(api_key.expose_secret(), "test-api-key");
          Ok(vec![PlatformGame {
             platform_game_id: PlatformGameId::new("game_test"),
@@ -100,14 +107,15 @@ mod tests {
       }
    }
 
-   #[test]
-   fn sync_engine_produces_a_versioned_envelope() {
+   #[tokio::test]
+   async fn sync_engine_produces_a_versioned_envelope() {
       let steam = SteamSource::new(
          TestSteamClient,
          CredentialKey::SteamIPartnerFinancialsService,
       );
       let envelope = SyncEngine::new(TestCredentialStore, steam)
          .sync(StudioId::new("studio_test"))
+         .await
          .expect("test synchronization should succeed");
 
       assert_eq!(envelope.protocol_version, ProtocolVersion::V1);

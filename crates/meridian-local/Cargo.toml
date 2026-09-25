@@ -7,10 +7,12 @@ license.workspace      = true
 repository.workspace   = true
 
 [dependencies]
+async-trait.workspace = true
 meridian-credential-store.workspace = true
 meridian-platform.workspace         = true
 meridian-sync-protocol.workspace    = true
 meridian-types.workspace            = true
+tokio.workspace = true
 
 [dev-dependencies]
 meridian-steam.workspace = true

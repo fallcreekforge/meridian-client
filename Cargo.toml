@@ -18,15 +18,19 @@ rust-version = "1.98"
 version      = "0.1.0"
 
 [workspace.dependencies]
-clap                      = { features = [ "derive" ], version = "4" }
 meridian-credential-store = { path = "crates/meridian-credential-store" }
 meridian-platform         = { path = "crates/meridian-platform" }
 meridian-steam            = { path = "crates/meridian-steam" }
 meridian-sync-protocol    = { path = "crates/meridian-sync-protocol" }
 meridian-types            = { path = "crates/meridian-types" }
-serde                     = { features = [ "derive" ], version = "1" }
-serde_json                = "1"
-thiserror                 = "2"
+
+async-trait = "0.1.92"
+clap        = { features = [ "derive" ], version = "4" }
+reqwest     = { features = [ "json" ], version = "0.13" }
+serde       = { features = [ "derive" ], version = "1" }
+serde_json  = "1"
+thiserror   = "2"
+tokio       = { features = [ "full" ], version = "1" }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
