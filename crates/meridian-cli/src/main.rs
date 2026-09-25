@@ -22,7 +22,15 @@ use serde_json::from_reader;
 const LINUX_CONFIG_FILE_DEFAULT_PATH: &str = "";
 const WINDOWS_CONFIG_FILE_DEFAULT_PATH: &str = "";
 
+#[expect(clippy::doc_paragraphs_missing_punctuation)]
 /// Meridian Client commands.
+///
+/// # Usage
+///
+/// `meridian <COMMAND> [OPTIONS]`
+///
+/// Supported commands are `status`, `sync`, and `agent`. Each command
+/// accepts `-c, --config <CONFIG>` to specify a configuration file.
 #[derive(Debug, Parser)]
 #[command(name = "meridian", version, about)]
 struct Cli {
@@ -97,7 +105,7 @@ fn main() -> ExitCode {
       return ExitCode::FAILURE;
    };
 
-   let _credential_store = FileCredentialStore::new(PathBuf::from(config.secret_file_path));
+   let _credential_store = FileCredentialStore::new(config.secret_file_path);
 
    // TODO: match cmd { ... }
 
