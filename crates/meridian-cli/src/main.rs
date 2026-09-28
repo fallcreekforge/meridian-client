@@ -138,10 +138,13 @@ fn main() -> ExitCode {
       .any(|plat| plat.eq(&Platform::Steam));
 
    let steam_sync_engine = if is_steam_configured {
-      let steam_client = SteamHttpClient::new();
-      let steam_source =
-         SteamSource::new(steam_client, CredentialKey::SteamIPartnerFinancialsService);
-      Some(SyncEngine::new(credential_store, steam_source))
+      Some(SyncEngine::new(
+         credential_store,
+         SteamSource::new(
+            SteamHttpClient::new(),
+            CredentialKey::SteamIPartnerFinancialsService,
+         ),
+      ))
    } else {
       None
    };
