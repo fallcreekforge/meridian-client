@@ -44,7 +44,7 @@ const WINDOWS_CONFIG_FILE_DEFAULT_PATH: &str = "";
 #[command(name = "meridian", version, about)]
 struct Cli {
    #[command(subcommand)]
-   command: Command,
+   command: Option<Command>,
 }
 
 #[derive(Debug, Subcommand)]
@@ -67,9 +67,11 @@ enum Command {
 }
 
 fn main() -> ExitCode {
-   let cmd = Cli::parse().command;
+   // Handles the case where meridian is invoked with `-v` or `--version`.
+   let Some(cmd) = Cli::parse().command else {
+      return ExitCode::SUCCESS;
+   };
 
-   // Config File Path can be specified for all commands.
    let config_file_path = match &cmd {
       &Command::Status { ref config }
       | &Command::Sync { ref config }
@@ -116,7 +118,7 @@ fn main() -> ExitCode {
 
    let credential_store = FileCredentialStore::new(config.secret_file_path);
 
-   let configured_platforms: Vec<Platform> = config
+   let configured_platforms: Vec<Platform> = &config
       .platforms
       .iter()
       .flat_map(|plat| {
@@ -145,7 +147,7 @@ fn main() -> ExitCode {
    };
 
    let Some(steam_sync_engine) = steam_sync_engine else {
-      eprintln!("ERROR: Error reading file {config_file_path}.");
+      eprintln!("Error spawning sync engine!");
       return ExitCode::FAILURE;
    };
 
