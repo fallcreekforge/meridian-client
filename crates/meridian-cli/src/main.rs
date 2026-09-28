@@ -16,7 +16,16 @@ use clap::{
    Subcommand,
 };
 use meridian_cli::Config;
-use meridian_credential_store::FileCredentialStore;
+use meridian_credential_store::{
+   CredentialKey,
+   FileCredentialStore,
+};
+use meridian_local::SyncEngine;
+use meridian_platform::Platform;
+use meridian_steam::{
+   SteamHttpClient,
+   SteamSource,
+};
 use serde_json::from_reader;
 
 const LINUX_CONFIG_FILE_DEFAULT_PATH: &str = "";
@@ -105,7 +114,40 @@ fn main() -> ExitCode {
       return ExitCode::FAILURE;
    };
 
-   let _credential_store = FileCredentialStore::new(config.secret_file_path);
+   let credential_store = FileCredentialStore::new(config.secret_file_path);
+
+   let configured_platforms: Vec<Platform> = config
+      .platforms
+      .iter()
+      .flat_map(|plat| {
+         plat.keys().map(|plat| {
+            plat
+               .parse::<Platform>()
+               .expect("unrecognized platforms return Ok(Platfrom::Unimplemented)")
+         })
+      })
+      .filter(|plat| plat.eq(&Platform::Steam))
+      .collect();
+
+   // TODO: figure out how we want to iterate this list for
+   // future platforms and configurations of those platforms
+   let is_steam_configured = configured_platforms
+      .iter()
+      .any(|plat| plat.eq(&Platform::Steam));
+
+   let steam_sync_engine = if is_steam_configured {
+      let steam_client = SteamHttpClient::new();
+      let steam_source =
+         SteamSource::new(steam_client, CredentialKey::SteamIPartnerFinancialsService);
+      Some(SyncEngine::new(credential_store, steam_source))
+   } else {
+      None
+   };
+
+   let Some(steam_sync_engine) = steam_sync_engine else {
+      eprintln!("ERROR: Error reading file {config_file_path}.");
+      return ExitCode::FAILURE;
+   };
 
    // TODO: match cmd { ... }
 

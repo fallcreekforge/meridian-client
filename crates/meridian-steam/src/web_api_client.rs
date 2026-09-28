@@ -25,4 +25,12 @@ impl SteamClient for SteamHttpClient {
       let _ = api_key;
       todo!()
    }
+
+   async fn sync_steam_game_financials(
+      &self,
+      api_key: &meridian_credential_store::SecretString,
+   ) -> Result<Vec<()>, crate::SteamError> {
+      let _ = api_key;
+      todo!()
+   }
 }

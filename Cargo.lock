@@ -776,6 +776,9 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "meridian-credential-store",
+ "meridian-local",
+ "meridian-platform",
+ "meridian-steam",
  "serde",
  "serde_json",
 ]
@@ -789,7 +792,6 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
- "tokio",
 ]
 
 [[package]]
@@ -802,6 +804,7 @@ dependencies = [
  "meridian-steam",
  "meridian-sync-protocol",
  "meridian-types",
+ "thiserror",
  "tokio",
 ]
 
@@ -812,7 +815,7 @@ dependencies = [
  "async-trait",
  "meridian-credential-store",
  "meridian-types",
- "tokio",
+ "serde",
 ]
 
 [[package]]

@@ -1,5 +1,4 @@
 //! Reusable customer-side synchronization orchestration.
-
 use meridian_credential_store::CredentialStore;
 use meridian_platform::{
    Platform,
@@ -11,6 +10,7 @@ use meridian_sync_protocol::{
    SyncEnvelopeV1,
 };
 use meridian_types::StudioId;
+
 /// Coordinates credential access, platform collection, and protocol creation.
 pub struct SyncEngine<S, C> {
    credential_store: S,
@@ -32,7 +32,9 @@ where
 
    /// Collects and normalizes local data into the public protocol.
    pub async fn sync(&self, studio_id: StudioId) -> Result<SyncEnvelopeV1, C::Error> {
-      let platform = protocol_platform(self.platform_client.platform());
+      let platform = protocol_platform(self.platform_client.platform())
+         .expect("an invalid platform client cannot be provided to SyncEngine");
+
       let games = self
          .platform_client
          .discover_games(&self.credential_store)
@@ -51,9 +53,10 @@ where
    }
 }
 
-const fn protocol_platform(platform: Platform) -> GamePlatformV1 {
+const fn protocol_platform(platform: Platform) -> Option<GamePlatformV1> {
    match platform {
-      Platform::Steam => GamePlatformV1::Steam,
+      Platform::Steam => Some(GamePlatformV1::Steam),
+      _ => None,
    }
 }
 
