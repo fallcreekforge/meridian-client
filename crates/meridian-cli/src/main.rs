@@ -1,5 +1,3 @@
-#![feature(try_blocks)]
-
 use std::{
    env,
    fs::File,
@@ -99,16 +97,14 @@ fn main() -> ExitCode {
       return ExitCode::FAILURE;
    }
 
-   let file: Result<File, io::Error> = try { File::open(config_file_path)? };
-
-   let Ok(file) = file else {
+   let Ok(file) = File::open(config_file_path) else {
       eprintln!("ERROR: Invalid file format. The configuration file must be a valid JSON file.");
       return ExitCode::FAILURE;
    };
 
    let reader = io::BufReader::new(file);
 
-   let config: Result<Config, serde_json::Error> = try { from_reader(reader)? };
+   let config: Result<Config, serde_json::Error> = from_reader(reader);
 
    let Ok(config) = config else {
       let config_file_path = config_file_path.display();
