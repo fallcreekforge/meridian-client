@@ -16,9 +16,9 @@ meridian-platform.workspace         = true
 meridian-steam.workspace            = true
 
 clap.workspace       = true
+meridian-local       = { path = "../meridian-local", version = "0.1.0" }
 serde.workspace      = true
 serde_json.workspace = true
-meridian-local = { version = "0.1.0", path = "../meridian-local" }
 
 [lints]
 workspace = true
