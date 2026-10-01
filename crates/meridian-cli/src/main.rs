@@ -49,17 +49,17 @@ struct Cli {
 enum Command {
    /// Reports local runtime status.
    Status {
-      #[arg(short, long)]
+      #[arg(short = 'c', long)]
       config: Option<PathBuf>,
    },
    /// One-shot operation for querying and uploading data.
    Sync {
-      #[arg(short, long)]
+      #[arg(short = 'c', long)]
       config: Option<PathBuf>,
    },
    /// Agent mode. Self-scheduled querying and uploading functionality.
    Agent {
-      #[arg(short, long)]
+      #[arg(short = 'c', long)]
       config: Option<PathBuf>,
    },
 }
