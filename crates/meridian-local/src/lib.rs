@@ -96,6 +96,7 @@ mod tests {
 
    struct TestSteamClient;
 
+   // FYI - I'm still figuring out the shape of this trait.
    #[async_trait]
    impl SteamClient for TestSteamClient {
       async fn discover_games(
@@ -107,6 +108,15 @@ mod tests {
             platform_game_id: PlatformGameId::new("game_test"),
             name:             String::from("Test Game"),
          }])
+      }
+
+      // Skeleton implementation for now
+      async fn sync_steam_game_financials(
+         &self,
+         api_key: &SecretString,
+      ) -> Result<Vec<()>, SteamError> {
+         let _api_key = api_key;
+         Ok(Vec::new())
       }
    }
 

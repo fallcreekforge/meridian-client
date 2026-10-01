@@ -23,8 +23,8 @@ use meridian_credential_store::{
 use meridian_local::SyncEngine;
 use meridian_platform::Platform;
 use meridian_steam::{
-   SteamHttpClient,
    SteamSource,
+   SteamWebApiClient,
 };
 use serde_json::from_reader;
 
@@ -137,19 +137,17 @@ fn main() -> ExitCode {
       .iter()
       .any(|plat| plat.eq(&Platform::Steam));
 
-   let steam_sync_engine = if is_steam_configured {
-      Some(SyncEngine::new(
+   let steam_sync_engine = is_steam_configured.then(|| {
+      SyncEngine::new(
          credential_store,
          SteamSource::new(
-            SteamHttpClient::new(),
+            SteamWebApiClient::new(),
             CredentialKey::SteamIPartnerFinancialsService,
          ),
-      ))
-   } else {
-      None
-   };
+      )
+   });
 
-   let Some(steam_sync_engine) = steam_sync_engine else {
+   let Some(_steam_sync_engine) = steam_sync_engine else {
       eprintln!("Error spawning sync engine!");
       return ExitCode::FAILURE;
    };

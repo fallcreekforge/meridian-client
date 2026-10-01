@@ -14,9 +14,9 @@ use meridian_platform::{
 };
 use thiserror::Error;
 
-pub mod web_api_client;
+pub mod http_client;
 
-pub use web_api_client::SteamHttpClient;
+pub use http_client::SteamWebApiClient;
 
 #[derive(Debug, Error)]
 pub enum SteamError {
