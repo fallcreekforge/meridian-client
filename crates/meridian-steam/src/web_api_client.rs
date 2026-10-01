@@ -3,11 +3,11 @@ use reqwest::Client;
 
 use crate::SteamClient;
 
-pub struct SteamHttpClient {
+pub struct SteamWebApiClient {
    pub http: Client,
 }
 
-impl SteamHttpClient {
+impl SteamWebApiClient {
    #[must_use]
    pub fn new() -> Self {
       Self {
@@ -17,7 +17,7 @@ impl SteamHttpClient {
 }
 
 #[async_trait]
-impl SteamClient for SteamHttpClient {
+impl SteamClient for SteamWebApiClient {
    async fn discover_games(
       &self,
       api_key: &meridian_credential_store::SecretString,

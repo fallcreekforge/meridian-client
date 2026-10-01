@@ -56,7 +56,7 @@ where
 const fn protocol_platform(platform: Platform) -> Option<GamePlatformV1> {
    match platform {
       Platform::Steam => Some(GamePlatformV1::Steam),
-      _ => None,
+      Platform::Unimplemented => None,
    }
 }
 

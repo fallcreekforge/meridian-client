@@ -118,7 +118,7 @@ fn main() -> ExitCode {
 
    let credential_store = FileCredentialStore::new(config.secret_file_path);
 
-   let configured_platforms: Vec<Platform> = &config
+   let configured_platforms: Vec<Platform> = config
       .platforms
       .iter()
       .flat_map(|plat| {
