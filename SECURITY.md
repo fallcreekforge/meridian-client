@@ -8,7 +8,8 @@ never include live credentials or customer data in a report.
 ## Trust boundary
 
 - Platform credentials remain in studio-controlled infrastructure.
-- Meridian Cloud receives only values represented by `meridian-sync-protocol`.
+- Meridian Cloud receives only values represented by `meridian-local`'s versioned sync payload
+  types.
 - Passwords, sessions, Steam Guard secrets, API keys, and arbitrary credential-store values must
   never enter that protocol.
 

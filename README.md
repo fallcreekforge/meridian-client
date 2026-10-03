@@ -1,6 +1,6 @@
 # Meridian Client
 
-Meridian is a Fall Creek Forge product for independent game studios. Meridian Client is its
+Meridian is a Fall Creek Forge product for game studios. Meridian Client is its
 open-source software for studio-controlled infrastructure.
 
 Meridian Client keeps platform credentials local and produces an explicit, auditable payload for
@@ -47,6 +47,8 @@ outside this repository.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITY.md](SECURITY.md), and
 [CONTRIBUTING.md](CONTRIBUTING.md) for repository-specific details.
+Cross-repository product documentation lives in the
+[`fallcreekforge-docs`](fallcreekforge-docs/meridian/meridian-client) submodule.
 
 ## License
 

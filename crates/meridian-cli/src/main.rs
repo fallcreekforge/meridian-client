@@ -19,8 +19,8 @@ use meridian_credential_store::{
    FileCredentialStore,
 };
 use meridian_local::SyncEngine;
-use meridian_platform::Platform;
-use meridian_steam::{
+use meridian_platform::{
+   Platform,
    SteamSource,
    SteamWebApiClient,
 };
@@ -112,7 +112,9 @@ fn main() -> ExitCode {
       return ExitCode::FAILURE;
    };
 
-   let credential_store = FileCredentialStore::new(config.secret_file_path);
+   let Ok(credential_store) = FileCredentialStore::load_from_file(config.secret_file_path) else {
+      return ExitCode::FAILURE;
+   };
 
    let configured_platforms: Vec<Platform> = config
       .platforms
@@ -136,10 +138,7 @@ fn main() -> ExitCode {
    let steam_sync_engine = is_steam_configured.then(|| {
       SyncEngine::new(
          credential_store,
-         SteamSource::new(
-            SteamWebApiClient::new(),
-            CredentialKey::SteamIPartnerFinancialsService,
-         ),
+         SteamSource::new(SteamWebApiClient::new(), CredentialKey::SteamFinancial),
       )
    });
 

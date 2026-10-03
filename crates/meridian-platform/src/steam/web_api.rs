@@ -1,7 +1,10 @@
 use async_trait::async_trait;
 use reqwest::Client;
 
-use crate::SteamClient;
+use super::api::{
+   SteamClient,
+   SteamError,
+};
 
 pub struct SteamWebApiClient {
    pub http: Client,
@@ -21,7 +24,7 @@ impl SteamClient for SteamWebApiClient {
    async fn discover_games(
       &self,
       api_key: &meridian_credential_store::SecretString,
-   ) -> Result<Vec<meridian_platform::PlatformGame>, crate::SteamError> {
+   ) -> Result<Vec<crate::PlatformGame>, SteamError> {
       let _ = api_key;
       todo!()
    }
@@ -29,7 +32,7 @@ impl SteamClient for SteamWebApiClient {
    async fn sync_steam_game_financials(
       &self,
       api_key: &meridian_credential_store::SecretString,
-   ) -> Result<Vec<()>, crate::SteamError> {
+   ) -> Result<Vec<()>, SteamError> {
       let _ = api_key;
       todo!()
    }

@@ -778,7 +778,6 @@ dependencies = [
  "meridian-credential-store",
  "meridian-local",
  "meridian-platform",
- "meridian-steam",
  "serde",
  "serde_json",
 ]
@@ -787,7 +786,6 @@ dependencies = [
 name = "meridian-credential-store"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "secrecy",
  "serde",
  "serde_json",
@@ -801,9 +799,9 @@ dependencies = [
  "async-trait",
  "meridian-credential-store",
  "meridian-platform",
- "meridian-steam",
- "meridian-sync-protocol",
  "meridian-types",
+ "serde",
+ "serde_json",
  "thiserror",
  "tokio",
 ]
@@ -815,28 +813,10 @@ dependencies = [
  "async-trait",
  "meridian-credential-store",
  "meridian-types",
- "serde",
-]
-
-[[package]]
-name = "meridian-steam"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "meridian-credential-store",
- "meridian-platform",
  "reqwest",
+ "serde",
  "thiserror",
  "tokio",
-]
-
-[[package]]
-name = "meridian-sync-protocol"
-version = "0.1.0"
-dependencies = [
- "meridian-types",
- "serde",
- "serde_json",
 ]
 
 [[package]]

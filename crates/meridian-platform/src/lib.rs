@@ -10,6 +10,17 @@ use serde::{
    Serialize,
 };
 
+pub mod steam;
+
+pub use steam::{
+   adapter::SteamSource,
+   api::{
+      SteamClient,
+      SteamError,
+   },
+   web_api::SteamWebApiClient,
+};
+
 /// A supported external platform.
 #[derive(Deserialize, Serialize, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Platform {

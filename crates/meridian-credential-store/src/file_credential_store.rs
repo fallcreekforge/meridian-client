@@ -6,7 +6,6 @@ use std::{
    path::PathBuf,
 };
 
-use async_trait::async_trait;
 use secrecy::SecretString;
 use serde_json::from_reader;
 
@@ -19,27 +18,15 @@ use crate::{
 
 /// Credentials loaded from a customer-controlled configuration file.
 pub struct FileCredentialStore {
-   pub secret_file_path: PathBuf,
+   config: SecretConfig,
 }
 
 impl FileCredentialStore {
    /// Creates a credential store from values already protected as secrets.
-   #[must_use]
-   pub fn new(secret_file_path: PathBuf) -> Self {
-      Self { secret_file_path }
-   }
-}
+   pub fn load_from_file(secret_file_path: PathBuf) -> Result<Self, CredentialStoreError> {
+      println!("Opening secret file: {}", secret_file_path.display());
 
-#[async_trait]
-impl CredentialStore for FileCredentialStore {
-   async fn get(&self, key: CredentialKey) -> Result<SecretString, CredentialStoreError> {
-      // TODO: Change these to be asynchronous operations
-
-      let path = &self.secret_file_path;
-
-      println!("Opening secret file: {}", path.display());
-
-      if !path
+      if !secret_file_path
          .extension()
          .and_then(|ext| ext.to_str())
          .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
@@ -48,19 +35,21 @@ impl CredentialStore for FileCredentialStore {
          return Err(CredentialStoreError::IncorrectFileType);
       }
 
-      let file = File::open(path)?;
-
+      let file = File::open(secret_file_path)?;
       let reader = BufReader::new(file);
-
       let config: SecretConfig = from_reader(reader)?;
 
+      Ok(Self { config })
+   }
+}
+
+impl CredentialStore for FileCredentialStore {
+   fn get(&self, key: CredentialKey) -> &SecretString {
+      // TODO: Change these to be asynchronous operations
       match key {
-         CredentialKey::SteamIPartnerFinancialsService => {
-            Ok(SecretString::from(
-               config.steam_ipartner_financials_service_key,
-            ))
-         },
-         CredentialKey::MeridianCloud => Ok(SecretString::from(config.meridian_cloud_key)),
+         CredentialKey::SteamPublisher => &self.config.steam_publisher_web_api_key,
+         CredentialKey::SteamFinancial => &self.config.steam_financial_web_api_key,
+         CredentialKey::MeridianCloud => &self.config.meridian_cloud_key,
       }
    }
 }

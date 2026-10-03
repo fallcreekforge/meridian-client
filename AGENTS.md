@@ -3,16 +3,19 @@
 - Use Nushell; `nix develop` starts the pinned environment.
 - Meridian is the product; this repository implements Meridian Client.
 - Make the smallest coherent change and avoid speculative dependencies or abstractions.
+- Keep implementation code out of `mod.rs`; use it only for submodule declarations and re-exports,
+  and put implementations in descriptively named module files.
 - Preserve the dependency graph in `ARCHITECTURE.md` and keep cloud implementation out of this
   repository.
 - Update the current-state diagram in the same PR as any component, dependency, or runtime-flow
   change.
 - Keep cross-repository product and domain decisions in `fallcreekforge-docs`.
-- For external documentation, roadmap, sprint, prioritization, or sequencing work, read
-  `EXTERNAL-CONTEXT.md` and the relevant linked context when available.
+- For external documentation, read the relevant context in the `fallcreekforge-docs` submodule
+  when available.
 - Read `SECURITY.md` before changing credentials, protocols, transports, logging, or the
   customer-to-cloud trust boundary.
-- Update an ADR only when an architectural contract changes.
+- Update an ADR in `fallcreekforge-docs/meridian/meridian-client/adr` only when an architectural
+  contract changes.
 - Follow crate-local `AGENTS.md` files for boundary-specific rules.
 
 Run before handoff:

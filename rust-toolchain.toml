@@ -1,4 +1,6 @@
+# Builds and linting use stable Rust. The Nix development environment supplies
+# the pinned nightly rustfmt required by rustfmt.toml.
 [toolchain]
-channel    = "nightly-2026-09-11"
-components = [ "cargo", "clippy", "rustfmt", "rust-src" ]
+channel    = "1.98.1"
+components = [ "cargo", "clippy", "rust-src" ]
 profile    = "minimal"
