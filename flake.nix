@@ -25,19 +25,13 @@
       pkgsFor = system: import nixpkgs { inherit system; };
       rustToolchainFor =
         system:
-        fenix.packages.${system}.complete.withComponents [
+        fenix.packages.${system}.stable.withComponents [
           "cargo"
           "clippy"
           "rust-src"
           "rustc"
-          "rustfmt"
         ];
-      stableRustToolchainFor =
-        system:
-        fenix.packages.${system}.stable.withComponents [
-          "cargo"
-          "rustc"
-        ];
+      rustfmtFor = system: fenix.packages.${system}.complete.withComponents [ "rustfmt" ];
       rustPlatformFor =
         system:
         let
@@ -47,6 +41,18 @@
         pkgs.makeRustPlatform {
           cargo = rustToolchain;
           rustc = rustToolchain;
+        };
+      rustSource =
+        let
+          inherit (pkgsFor ciSystem) lib;
+        in
+        lib.fileset.toSource {
+          root = ./.;
+          fileset = lib.fileset.unions [
+            ./Cargo.lock
+            ./Cargo.toml
+            (lib.fileset.fileFilter (file: file.hasExt "rs" || file.name == "Cargo.toml") ./crates)
+          ];
         };
 
       meridianClient =
@@ -58,7 +64,7 @@
           pname = "meridian-client";
           inherit version;
 
-          src = ./.;
+          src = rustSource;
           cargoLock.lockFile = ./Cargo.lock;
           cargoBuildFlags = [
             "--workspace"
@@ -88,9 +94,9 @@
           rustToolchain =
             with fenix.packages.${ciSystem};
             combine [
-              minimal.cargo
-              minimal.rustc
-              targets.${target}.latest.rust-std
+              stable.cargo
+              stable.rustc
+              targets.${target}.stable.rust-std
             ];
           rustPlatform = crossPkgs.makeRustPlatform {
             cargo = rustToolchain;
@@ -101,7 +107,7 @@
           pname = "meridian-client-windows";
           inherit version;
 
-          src = ./.;
+          src = rustSource;
           cargoLock.lockFile = ./Cargo.lock;
           cargoBuildFlags = [
             "--workspace"
@@ -118,48 +124,12 @@
           };
         };
 
-      stableCompatibility =
-        let
-          pkgs = pkgsFor ciSystem;
-          rustToolchain = stableRustToolchainFor ciSystem;
-          rustPlatform = pkgs.makeRustPlatform {
-            cargo = rustToolchain;
-            rustc = rustToolchain;
-          };
-        in
-        pkgs.stdenv.mkDerivation {
-          pname = "meridian-client-stable-compatibility";
-          inherit version;
-
-          src = ./.;
-          cargoDeps = rustPlatform.importCargoLock {
-            lockFile = ./Cargo.lock;
-          };
-          nativeBuildInputs = [
-            rustPlatform.cargoSetupHook
-            rustToolchain
-          ];
-          strictDeps = true;
-          dontConfigure = true;
-
-          buildPhase = ''
-            runHook preBuild
-            cargo test --locked --workspace --all-features
-            runHook postBuild
-          '';
-
-          installPhase = ''
-            runHook preInstall
-            touch "$out"
-            runHook postInstall
-          '';
-        };
-
       repositoryQuality =
         let
           pkgs = pkgsFor ciSystem;
           rustPlatform = rustPlatformFor ciSystem;
           rustToolchain = rustToolchainFor ciSystem;
+          rustfmt = rustfmtFor ciSystem;
         in
         pkgs.stdenv.mkDerivation {
           pname = "meridian-client-repository-quality";
@@ -178,6 +148,7 @@
             pkgs.taplo
             rustPlatform.cargoSetupHook
             rustToolchain
+            rustfmt
           ];
           strictDeps = true;
           dontConfigure = true;
@@ -186,9 +157,9 @@
             runHook preBuild
 
             export CLIPPY_CONF_DIR="$PWD"
-            export RUSTFMT="${rustToolchain}/bin/rustfmt"
+            export RUSTFMT="${rustfmt}/bin/rustfmt"
             export TAPLO_CONFIG="$PWD/taplo.toml"
-            just fmt lint nix-fmt nix-lint test toml-fmt
+            just fmt lint nix-fmt nix-lint toml-fmt
             if [ -f .github/workflows/windows.yml ]; then
               just gha-lint
             fi
@@ -213,7 +184,6 @@
       checks.${ciSystem} = {
         meridian-client = meridianClient;
         repository-quality = repositoryQuality;
-        stable-compatibility = stableCompatibility;
         meridian-client-windows-x86_64 = meridianClientWindowsX86_64;
       };
 
@@ -222,6 +192,7 @@
         let
           pkgs = pkgsFor system;
           rustToolchain = rustToolchainFor system;
+          rustfmt = rustfmtFor system;
           clippyConfDir = pkgs.linkFarm "meridian-clippy-configuration" {
             "clippy.toml" = ./clippy.toml;
           };
@@ -230,6 +201,7 @@
           default = pkgs.mkShell {
             packages = [
               rustToolchain
+              rustfmt
               fenix.packages.${system}.rust-analyzer
               pkgs.actionlint
               pkgs.nushell
@@ -248,7 +220,7 @@
 
             CARGO_NET_GIT_FETCH_WITH_CLI = "true";
             CLIPPY_CONF_DIR = "${clippyConfDir}";
-            RUSTFMT = "${rustToolchain}/bin/rustfmt";
+            RUSTFMT = "${rustfmt}/bin/rustfmt";
             TAPLO_CONFIG = "${./taplo.toml}";
 
             shellHook = ''

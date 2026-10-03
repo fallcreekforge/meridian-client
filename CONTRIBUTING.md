@@ -19,5 +19,6 @@ tests with the stable toolchain pinned by Fenix. When updating toolchains, updat
 
 Keep changes small and preserve the dependency direction in [ARCHITECTURE.md](ARCHITECTURE.md).
 Update its current-state diagram when a PR changes components, dependencies, or runtime data flow.
-Protocol expansions require security review. Architectural contract changes require a concise ADR.
+Protocol expansions require security review. Architectural contract changes require a concise ADR
+in `fallcreekforge-docs/meridian/meridian-client/adr`.
 Never use real credentials in development or tests.

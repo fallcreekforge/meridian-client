@@ -18,19 +18,21 @@ meridian-cli                 (standalone command parsing)
 
 meridian-local ────────────► meridian-credential-store
        ├───────────────────► meridian-platform
-       ├───────────────────► meridian-sync-protocol ──► meridian-types
        └───────────────────► meridian-types
-       └ - - dev/test - - -► meridian-steam
 
 meridian-platform ─────────► meridian-credential-store
        └───────────────────► meridian-types
 
-meridian-steam ────────────► meridian-credential-store
-       └───────────────────► meridian-platform
+meridian-credential-store
+       └── FileCredentialStore (customer-controlled configuration)
 ```
 
-`SyncEngine` can produce a versioned envelope through injected credential and platform contracts.
-The CLI is not connected to it, and no real platform or cloud request is implemented.
+`SyncEngine` owns and can produce a versioned envelope through injected credential and platform
+contracts. `meridian-platform` includes the typed Steam adapter alongside the platform-neutral
+contract.
+`FileCredentialStore` can hold credentials deserialized from customer-controlled configuration.
+The CLI is not connected to either implementation, and no real platform or cloud request is
+implemented.
 
 ## Target state
 
