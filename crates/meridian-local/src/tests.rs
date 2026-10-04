@@ -7,17 +7,15 @@ use meridian_credential_store::{
 };
 use meridian_platform::{
    PlatformGame,
+   PlatformGameId,
    SteamClient,
    SteamError,
    SteamSource,
 };
-use meridian_types::{
-   PlatformGameId,
-   StudioId,
-};
 
 use super::{
    ProtocolVersion,
+   StudioId,
    SyncEngine,
 };
 

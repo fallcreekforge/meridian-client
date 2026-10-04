@@ -3,8 +3,8 @@
 - Use Nushell; `nix develop` starts the pinned environment.
 - Meridian is the product; this repository implements Meridian Client.
 - Make the smallest coherent change and avoid speculative dependencies or abstractions.
-- Keep implementation code out of `mod.rs`; use it only for submodule declarations and re-exports,
-  and put implementations in descriptively named module files.
+- Use directory modules with `mod.rs` consistently. Keep `mod.rs` limited to submodule declarations
+  and re-exports, and put implementations in descriptively named module files.
 - Preserve the dependency graph in `ARCHITECTURE.md` and keep cloud implementation out of this
   repository.
 - Update the current-state diagram in the same PR as any component, dependency, or runtime-flow

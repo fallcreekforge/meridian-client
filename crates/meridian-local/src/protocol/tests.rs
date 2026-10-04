@@ -1,7 +1,4 @@
-use meridian_types::{
-   PlatformGameId,
-   StudioId,
-};
+use meridian_platform::PlatformGameId;
 use serde_json::{
    Value,
    json,
@@ -10,6 +7,7 @@ use serde_json::{
 use super::{
    GamePlatformV1,
    GameV1,
+   StudioId,
    SyncEnvelopeV1,
 };
 

@@ -4,7 +4,7 @@ members = [
   "crates/meridian-credential-store",
   "crates/meridian-local",
   "crates/meridian-platform",
-  "crates/meridian-types",
+  "crates/meridian-store",
 ]
 resolver = "3"
 
@@ -18,13 +18,14 @@ version      = "0.1.0"
 [workspace.dependencies]
 meridian-credential-store = { path = "crates/meridian-credential-store" }
 meridian-platform         = { path = "crates/meridian-platform" }
-meridian-types            = { path = "crates/meridian-types" }
+meridian-store            = { path = "crates/meridian-store" }
 
 async-trait = "0.1.92"
 clap        = { features = [ "derive" ], version = "4" }
 reqwest     = { features = [ "json" ], version = "0.13" }
 serde       = { features = [ "derive" ], version = "1" }
 serde_json  = "1"
+sqlx        = { default-features = false, features = [ "runtime-tokio", "sqlite" ], version = "0.9" }
 thiserror   = "2"
 tokio       = { features = [ "full" ], version = "1" }
 

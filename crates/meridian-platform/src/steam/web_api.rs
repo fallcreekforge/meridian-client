@@ -10,6 +10,7 @@ pub struct SteamWebApiClient {
    pub http: Client,
 }
 
+// TODO: move http client to top level shared resource
 impl SteamWebApiClient {
    #[must_use]
    pub fn new() -> Self {

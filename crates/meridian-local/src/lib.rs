@@ -6,11 +6,11 @@ use meridian_platform::{
    Platform,
    PlatformClient,
 };
-use meridian_types::StudioId;
 pub use protocol::{
    GamePlatformV1,
    GameV1,
    ProtocolVersion,
+   StudioId,
    SyncEnvelopeV1,
 };
 

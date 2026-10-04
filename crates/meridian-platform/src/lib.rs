@@ -4,7 +4,6 @@ use std::str::FromStr;
 
 use async_trait::async_trait;
 use meridian_credential_store::CredentialStore;
-use meridian_types::PlatformGameId;
 use serde::{
    Deserialize,
    Serialize,
@@ -26,6 +25,23 @@ pub use steam::{
 pub enum Platform {
    Steam,
    Unimplemented,
+}
+
+/// Identifies a game on an external platform.
+#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[serde(transparent)]
+pub struct PlatformGameId(String);
+
+impl PlatformGameId {
+   #[must_use]
+   pub fn new(value: impl Into<String>) -> Self {
+      Self(value.into())
+   }
+
+   #[must_use]
+   pub fn as_str(&self) -> &str {
+      &self.0
+   }
 }
 
 // Note, we cannot fail on this as any unrecognized Platform returns

@@ -1,7 +1,7 @@
 # meridian-local
 
-Contains reusable customer-side synchronization logic.
+Owns reusable customer-side synchronization orchestration.
 
-`SyncEngine` collects games through the platform-neutral `PlatformClient` contract and maps them
-into its explicit, versioned sync payload types. Platform and credential implementations can change
-without changing orchestration. The CLI is not connected yet.
+Platform collection, credential access, and durable state are consumed through their crate
+boundaries. This crate normalizes collected data into the public versioned sync protocol without
+owning platform-specific, persistence, cloud-transport, or CLI concerns.

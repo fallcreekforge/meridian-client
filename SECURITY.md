@@ -8,13 +8,22 @@ never include live credentials or customer data in a report.
 ## Trust boundary
 
 - Platform credentials remain in studio-controlled infrastructure.
-- Meridian Cloud receives only values represented by `meridian-local`'s versioned sync payload
-  types.
+- Meridian Cloud receives only values represented by the public versioned sync protocol.
 - Passwords, sessions, Steam Guard secrets, API keys, and arbitrary credential-store values must
   never enter that protocol.
 
 Unknown protocol fields are rejected. Any protocol change that expands what can cross the boundary
 requires security review.
+
+## Local persistence
+
+The SQLite store remains studio-controlled and may contain sensitive financial data.
+Implementations must restrict access to the database and its backups using operating-system file
+permissions appropriate to credential-adjacent application data.
+
+Transactional outbox records may contain only versioned sync-protocol payloads and delivery
+metadata. They must not contain platform credentials, arbitrary credential-store values, or
+unfiltered platform responses.
 
 ## Development rules
 
