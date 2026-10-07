@@ -1,31 +1,170 @@
+use std::{
+   env,
+   fs::File,
+   io,
+   path::{
+      Path,
+      PathBuf,
+   },
+   process::ExitCode,
+   sync::Arc,
+};
+
 use clap::{
    Parser,
    Subcommand,
 };
+use meridian_cli::Config;
+use meridian_credential_store::FileCredentialStore;
+use meridian_local::SyncEngine;
+use meridian_platform::{
+   Platform,
+   Producer,
+   SteamSource,
+   SteamWebApiClient,
+};
+use reqwest::Client;
+use serde_json::from_reader;
 
+// ########################
+// #        LINUX         #
+// ########################
+const LINUX_CONFIG_FILE_DEFAULT_PATH: &str = "/etc/meridian/config.json";
+#[expect(dead_code)]
+const LINUX_SQLITE_DEFAULT_PATH: &str = "/var/lib/meridian/state.db";
+
+// ########################
+// #       WINDOWS        #
+// ########################
+const WINDOWS_CONFIG_FILE_DEFAULT_PATH: &str = "~/AppData/Local/Meridian/config.json";
+#[expect(dead_code)]
+const WINDOWS_SQLITE_DEFAULT_PATH: &str = "~/AppData/Local/Meridian/config.json";
+
+#[expect(clippy::doc_paragraphs_missing_punctuation)]
 /// Meridian Client commands.
+///
+/// # Usage
+///
+/// `meridian <COMMAND> [OPTIONS]`
+///
+/// Supported commands are `status`, `sync`, and `agent`. Each command
+/// accepts `-c, --config <CONFIG>` to specify a configuration file.
 #[derive(Debug, Parser)]
 #[command(name = "meridian", version, about)]
 struct Cli {
    #[command(subcommand)]
-   command: Command,
+   command: Option<Command>,
 }
 
 #[derive(Debug, Subcommand)]
 enum Command {
    /// Reports local runtime status.
-   Status,
-   /// Reports synchronization availability.
-   Sync,
+   Status {
+      #[arg(short = 'c', long)]
+      config: Option<PathBuf>,
+   },
+   /// One-shot operation for querying and uploading data.
+   Sync {
+      #[arg(short = 'c', long)]
+      config: Option<PathBuf>,
+   },
+   /// Agent mode. Self-scheduled querying and uploading functionality.
+   Agent {
+      #[arg(short = 'c', long)]
+      config: Option<PathBuf>,
+   },
 }
 
-fn main() {
-   match Cli::parse().command {
-      Command::Status => {
-         println!("No platform connections are configured.");
-      },
-      Command::Sync => {
-         println!("Synchronization is not configured.");
-      },
+fn main() -> ExitCode {
+   // Handles the case where meridian is invoked with `-v` or `--version`.
+   let Some(cmd) = Cli::parse().command else {
+      return ExitCode::SUCCESS;
+   };
+
+   let config_file_path = match &cmd {
+      &Command::Status { ref config }
+      | &Command::Sync { ref config }
+      | &Command::Agent { ref config } => config,
+   };
+
+   // Fallback to operating system defaults if not provided.
+   let config_file_path = config_file_path.as_deref().unwrap_or_else(|| {
+      match env::consts::OS {
+         "linux" => Path::new(LINUX_CONFIG_FILE_DEFAULT_PATH),
+         "windows" => Path::new(WINDOWS_CONFIG_FILE_DEFAULT_PATH),
+         _ => Path::new(""),
+      }
+   });
+
+   // Validate the config file is a exists and is a supported format.
+   // Eventually, let's plan to actually parse json, but for now it is fine
+   // to just check the extension.
+   if !config_file_path
+      .extension()
+      .and_then(|ext| ext.to_str())
+      .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
+   {
+      eprintln!("ERROR: Invalid file format. The configuration file must be a valid JSON file.");
+      return ExitCode::FAILURE;
    }
+
+   let Ok(file) = File::open(config_file_path) else {
+      eprintln!("ERROR: Invalid file format. The configuration file must be a valid JSON file.");
+      return ExitCode::FAILURE;
+   };
+
+   let reader = io::BufReader::new(file);
+
+   let config: Result<Config, serde_json::Error> = from_reader(reader);
+
+   let Ok(config) = config else {
+      let config_file_path = config_file_path.display();
+      eprintln!("ERROR: Error reading file {config_file_path}.");
+      return ExitCode::FAILURE;
+   };
+
+   let Ok(credential_store) = FileCredentialStore::load_from_file(config.secret_file_path) else {
+      return ExitCode::FAILURE;
+   };
+
+   let credential_store = Arc::new(credential_store);
+
+   let configured_platforms: Vec<Platform> = config
+      .platforms
+      .iter()
+      .flat_map(|plat| {
+         plat.keys().map(|plat| {
+            plat
+               .parse::<Platform>()
+               .expect("unrecognized platforms return Ok(Platfrom::Unimplemented)")
+         })
+      })
+      .filter(|plat| plat.eq(&Platform::Steam))
+      .collect();
+
+   // TODO: figure out how we want to iterate this list for
+   // future platforms and configurations of those platforms
+   let is_steam_configured = configured_platforms
+      .iter()
+      .any(|plat| plat.eq(&Platform::Steam));
+
+   let http_client = Client::new();
+
+   let steam_producer = is_steam_configured
+      .then(|| SteamSource::new(Box::new(SteamWebApiClient::new(http_client.clone()))));
+
+   let Some(steam_producer) = steam_producer else {
+      eprintln!("Error spawning Steam Data Producer!");
+      return ExitCode::FAILURE;
+   };
+
+   let steam_producer = Box::new(steam_producer);
+
+   let producers: Vec<Box<dyn Producer>> = vec![steam_producer];
+
+   let _sync_engine = SyncEngine::new(credential_store, producers);
+
+   // TODO: match cmd { ... }
+
+   todo!()
 }

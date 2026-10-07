@@ -1,0 +1,3 @@
+[submodule "fallcreekforge-docs"]
+	path = fallcreekforge-docs
+	url = git@github.com:fallcreekforge/fallcreekforge-docs.git

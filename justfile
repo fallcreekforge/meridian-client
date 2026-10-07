@@ -24,9 +24,6 @@ gha-lint:
 check:
    cargo check --locked --workspace --all-targets --all-features
 
-agent-context-audit:
-   nu --no-config-file scripts/agent-context-audit.nu
-
 build:
    nix build .#meridian-client
 

@@ -1,114 +1,68 @@
 //! Reusable customer-side synchronization orchestration.
+mod protocol;
+
+use std::sync::Arc;
 
 use meridian_credential_store::CredentialStore;
 use meridian_platform::{
    Platform,
-   PlatformClient,
+   Producer,
+   ProducerError,
 };
-use meridian_sync_protocol::{
+pub use protocol::{
    GamePlatformV1,
    GameV1,
+   ProtocolVersion,
+   StudioId,
    SyncEnvelopeV1,
 };
-use meridian_types::StudioId;
+use thiserror::Error;
+use tokio::sync::Notify;
+
 /// Coordinates credential access, platform collection, and protocol creation.
-pub struct SyncEngine<S, C> {
-   credential_store: S,
-   platform_client:  C,
+/// Responsible for the orchestration and scheduling for Producer polling.
+#[expect(dead_code)]
+pub struct SyncEngine {
+   credential_store: Arc<dyn CredentialStore>,
+   producers:        Vec<Box<dyn Producer>>,
+   outbox_notify:    Arc<Notify>,
 }
 
-impl<S, C> SyncEngine<S, C>
-where
-   S: CredentialStore,
-   C: PlatformClient,
-{
+impl SyncEngine {
    #[must_use]
-   pub fn new(credential_store: S, platform_client: C) -> Self {
+   pub fn new(
+      credential_store: Arc<dyn CredentialStore>,
+      producers: Vec<Box<dyn Producer>>,
+   ) -> Self {
       Self {
          credential_store,
-         platform_client,
+         producers,
+         outbox_notify: Arc::new(Notify::new()),
       }
    }
 
    /// Collects and normalizes local data into the public protocol.
-   pub fn sync(&self, studio_id: StudioId) -> Result<SyncEnvelopeV1, C::Error> {
-      let platform = protocol_platform(self.platform_client.platform());
-      let games = self
-         .platform_client
-         .discover_games(&self.credential_store)?
-         .into_iter()
-         .map(|game| {
-            GameV1 {
-               platform,
-               platform_game_id: game.platform_game_id,
-               name: game.name,
-            }
-         })
-         .collect();
+   pub async fn run(self) -> Result<(), SyncEngineError> {
+      for producer in &self.producers {
+         producer.poll(self.credential_store.as_ref()).await?;
+      }
 
-      Ok(SyncEnvelopeV1::new(studio_id, games))
+      Ok(())
    }
 }
 
-const fn protocol_platform(platform: Platform) -> GamePlatformV1 {
+#[expect(dead_code)]
+const fn protocol_platform(platform: Platform) -> Option<GamePlatformV1> {
    match platform {
-      Platform::Steam => GamePlatformV1::Steam,
+      Platform::Steam => Some(GamePlatformV1::Steam),
+      Platform::Unimplemented => None,
    }
 }
 
-#[cfg(test)]
-mod tests {
-   use meridian_credential_store::{
-      CredentialKey,
-      CredentialStore,
-      CredentialStoreError,
-      SecretString,
-   };
-   use meridian_platform::PlatformGame;
-   use meridian_steam::{
-      SteamClient,
-      SteamError,
-      SteamSource,
-   };
-   use meridian_sync_protocol::ProtocolVersion;
-   use meridian_types::{
-      PlatformGameId,
-      StudioId,
-   };
-
-   use super::SyncEngine;
-
-   struct TestCredentialStore;
-
-   impl CredentialStore for TestCredentialStore {
-      fn get(&self, key: &CredentialKey) -> Result<SecretString, CredentialStoreError> {
-         assert_eq!(key.as_str(), "steam.test");
-         Ok(SecretString::new("test-api-key"))
-      }
-   }
-
-   struct TestSteamClient;
-
-   impl SteamClient for TestSteamClient {
-      fn discover_games(&self, api_key: &SecretString) -> Result<Vec<PlatformGame>, SteamError> {
-         assert_eq!(api_key.expose_secret(), "test-api-key");
-         Ok(vec![PlatformGame {
-            platform_game_id: PlatformGameId::new("game_test"),
-            name:             String::from("Test Game"),
-         }])
-      }
-   }
-
-   #[test]
-   fn sync_engine_produces_a_versioned_envelope() {
-      let steam = SteamSource::new(TestSteamClient, CredentialKey::new("steam.test"));
-      let envelope = SyncEngine::new(TestCredentialStore, steam)
-         .sync(StudioId::new("studio_test"))
-         .expect("test synchronization should succeed");
-
-      assert_eq!(envelope.protocol_version, ProtocolVersion::V1);
-      assert_eq!(envelope.studio_id.as_str(), "studio_test");
-      assert_eq!(envelope.games.len(), 1);
-      assert_eq!(envelope.games[0].name, "Test Game");
-   }
+#[derive(Debug, Error)]
+pub enum SyncEngineError {
+   #[error(transparent)]
+   Producer(#[from] ProducerError),
 }
+
+#[cfg(test)] mod tests;
