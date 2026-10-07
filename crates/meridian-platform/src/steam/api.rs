@@ -16,10 +16,8 @@ pub trait SteamClient: Send + Sync {
    /// Returns the studio's games.
    ///
    /// Implementations must never log `api_key` or include it in errors.
-   async fn query_configured_game_ids(
-      &self,
-      api_key: &SecretString,
-   ) -> Result<Vec<PlatformGame>, SteamError>;
+   async fn discover_games(&self, api_key: &SecretString) -> Result<Vec<PlatformGame>, SteamError>;
 
-   async fn query_game_finances(&self, api_key: &SecretString) -> Result<Vec<()>, SteamError>;
+   /// Returns financial data across all games available to the credential.
+   async fn fetch_financials(&self, api_key: &SecretString) -> Result<Vec<()>, SteamError>;
 }

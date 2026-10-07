@@ -43,7 +43,11 @@ impl SyncEngine {
 
    /// Collects and normalizes local data into the public protocol.
    pub async fn run(self) -> Result<(), SyncEngineError> {
-      todo!()
+      for producer in &self.producers {
+         producer.poll(self.credential_store.as_ref()).await?;
+      }
+
+      Ok(())
    }
 }
 

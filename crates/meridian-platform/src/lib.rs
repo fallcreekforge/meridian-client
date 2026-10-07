@@ -73,8 +73,8 @@ pub enum ProducerError {
 
 /// Capabilities local synchronization requires from a platform integration.
 #[async_trait]
-pub trait Producer {
+pub trait Producer: Send + Sync {
    fn platform(&self) -> Platform;
 
-   async fn poll(self: Box<Self>, credentials: &dyn CredentialStore) -> Result<(), ProducerError>;
+   async fn poll(&self, credentials: &dyn CredentialStore) -> Result<(), ProducerError>;
 }

@@ -16,7 +16,7 @@ mod secret_config;
 pub use file_credential_store::FileCredentialStore;
 
 /// Identifies a credential without exposing its value.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CredentialKey {
    SteamPublisher,
    SteamFinancial,

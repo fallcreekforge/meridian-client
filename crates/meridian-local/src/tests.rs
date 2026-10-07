@@ -29,10 +29,7 @@ struct TestSteamClient;
 
 #[async_trait]
 impl SteamClient for TestSteamClient {
-   async fn query_configured_game_ids(
-      &self,
-      api_key: &SecretString,
-   ) -> Result<Vec<PlatformGame>, SteamError> {
+   async fn discover_games(&self, api_key: &SecretString) -> Result<Vec<PlatformGame>, SteamError> {
       assert_eq!(api_key.expose_secret(), "test-api-key");
       Ok(vec![PlatformGame {
          platform_game_id: PlatformGameId::new("game_test"),
@@ -41,7 +38,7 @@ impl SteamClient for TestSteamClient {
    }
 
    // Skeleton implementation for now
-   async fn query_game_finances(&self, api_key: &SecretString) -> Result<Vec<()>, SteamError> {
+   async fn fetch_financials(&self, api_key: &SecretString) -> Result<Vec<()>, SteamError> {
       let _api_key = api_key;
       Ok(Vec::new())
    }

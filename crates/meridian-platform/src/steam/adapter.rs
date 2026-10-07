@@ -29,11 +29,11 @@ impl Producer for SteamSource {
       Platform::Steam
    }
 
-   async fn poll(self: Box<Self>, credentials: &dyn CredentialStore) -> Result<(), ProducerError> {
+   async fn poll(&self, credentials: &dyn CredentialStore) -> Result<(), ProducerError> {
       let publisher = credentials.get(CredentialKey::SteamPublisher);
       let _financial = credentials.get(CredentialKey::SteamFinancial);
 
-      let _game_ids = self.client.query_configured_game_ids(publisher).await?;
+      let _games = self.client.discover_games(publisher).await?;
       todo!()
    }
 }

@@ -20,7 +20,7 @@ impl SteamWebApiClient {
 
 #[async_trait]
 impl SteamClient for SteamWebApiClient {
-   async fn query_configured_game_ids(
+   async fn discover_games(
       &self,
       api_key: &meridian_credential_store::SecretString,
    ) -> Result<Vec<crate::PlatformGame>, SteamError> {
@@ -28,7 +28,7 @@ impl SteamClient for SteamWebApiClient {
       todo!()
    }
 
-   async fn query_game_finances(
+   async fn fetch_financials(
       &self,
       api_key: &meridian_credential_store::SecretString,
    ) -> Result<Vec<()>, SteamError> {
