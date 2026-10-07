@@ -18,11 +18,18 @@
   contract changes.
 - Follow crate-local `AGENTS.md` files for boundary-specific rules.
 
-Run before handoff:
+During development, run the smallest checks relevant to the change.
+
+Before declaring work merge-ready, run:
 
 ```nu
 just fmt
 just lint
 just test
-just ci
 ```
+
+Also run `just ci` before a merge-ready handoff when changing dependencies, `Cargo.lock`, Nix or
+build configuration, workflows, feature flags, target-specific code, or broad cross-crate
+contracts, or when explicitly requested.
+
+If full CI was not run, state that clearly at handoff.
