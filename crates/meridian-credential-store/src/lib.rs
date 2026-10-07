@@ -16,7 +16,7 @@ mod secret_config;
 pub use file_credential_store::FileCredentialStore;
 
 /// Identifies a credential without exposing its value.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum CredentialKey {
    SteamPublisher,
    SteamFinancial,
@@ -40,6 +40,6 @@ pub enum CredentialStoreError {
 
 /// Retrieves credentials held inside studio-controlled infrastructure,
 /// returning an owned `SecretString`.
-pub trait CredentialStore {
+pub trait CredentialStore: Send + Sync {
    fn get(&self, key: CredentialKey) -> &SecretString;
 }

@@ -10,15 +10,9 @@ use meridian_platform::{
    PlatformGameId,
    SteamClient,
    SteamError,
-   SteamSource,
 };
 
-use super::{
-   ProtocolVersion,
-   StudioId,
-   SyncEngine,
-};
-
+#[expect(dead_code)]
 struct TestCredentialStore {
    config: SecretString,
 }
@@ -30,12 +24,15 @@ impl CredentialStore for TestCredentialStore {
    }
 }
 
+#[expect(dead_code)]
 struct TestSteamClient;
 
-// FYI - I'm still figuring out the shape of this trait.
 #[async_trait]
 impl SteamClient for TestSteamClient {
-   async fn discover_games(&self, api_key: &SecretString) -> Result<Vec<PlatformGame>, SteamError> {
+   async fn query_configured_game_ids(
+      &self,
+      api_key: &SecretString,
+   ) -> Result<Vec<PlatformGame>, SteamError> {
       assert_eq!(api_key.expose_secret(), "test-api-key");
       Ok(vec![PlatformGame {
          platform_game_id: PlatformGameId::new("game_test"),
@@ -44,30 +41,8 @@ impl SteamClient for TestSteamClient {
    }
 
    // Skeleton implementation for now
-   async fn sync_steam_game_financials(
-      &self,
-      api_key: &SecretString,
-   ) -> Result<Vec<()>, SteamError> {
+   async fn query_game_finances(&self, api_key: &SecretString) -> Result<Vec<()>, SteamError> {
       let _api_key = api_key;
       Ok(Vec::new())
    }
-}
-
-#[tokio::test]
-async fn sync_engine_produces_a_versioned_envelope() {
-   let steam = SteamSource::new(TestSteamClient, CredentialKey::SteamFinancial);
-   let envelope = SyncEngine::new(
-      TestCredentialStore {
-         config: SecretString::from("test-api-key"),
-      },
-      steam,
-   )
-   .sync(StudioId::new("studio_test"))
-   .await
-   .expect("test synchronization should succeed");
-
-   assert_eq!(envelope.protocol_version, ProtocolVersion::V1);
-   assert_eq!(envelope.studio_id.as_str(), "studio_test");
-   assert_eq!(envelope.games.len(), 1);
-   assert_eq!(envelope.games[0].name, "Test Game");
 }

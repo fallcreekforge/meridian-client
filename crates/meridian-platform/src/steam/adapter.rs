@@ -4,58 +4,36 @@ use meridian_credential_store::{
    CredentialStore,
 };
 
-use super::api::{
-   SteamClient,
-   SteamError,
-};
+use super::api::SteamClient;
 use crate::{
    Platform,
-   PlatformClient,
-   PlatformGame,
+   Producer,
+   ProducerError,
 };
 
 /// Connects a typed Steam client to the platform-neutral collection contract.
-pub struct SteamSource<C> {
-   client:         C,
-   credential_key: CredentialKey,
+pub struct SteamSource {
+   client: Box<dyn SteamClient>,
 }
 
-impl<C> SteamSource<C> {
+impl SteamSource {
    #[must_use]
-   pub fn new(client: C, credential_key: CredentialKey) -> Self {
-      Self {
-         client,
-         credential_key,
-      }
+   pub fn new(client: Box<dyn SteamClient>) -> Self {
+      Self { client }
    }
 }
 
 #[async_trait]
-impl<C> PlatformClient for SteamSource<C>
-where
-   C: SteamClient + Sync,
-{
-   type Error = SteamError;
-
+impl Producer for SteamSource {
    fn platform(&self) -> Platform {
       Platform::Steam
    }
 
-   async fn discover_games(
-      &self,
-      credentials: &(dyn CredentialStore + Send + Sync),
-   ) -> Result<Vec<PlatformGame>, Self::Error> {
-      let api_key = credentials.get(self.credential_key);
+   async fn poll(self: Box<Self>, credentials: &dyn CredentialStore) -> Result<(), ProducerError> {
+      let publisher = credentials.get(CredentialKey::SteamPublisher);
+      let _financial = credentials.get(CredentialKey::SteamFinancial);
 
-      self.client.discover_games(api_key).await
-   }
-
-   async fn sync_game_financials(
-      &self,
-      credentials: &(dyn CredentialStore + Send + Sync),
-   ) -> Result<Vec<()>, Self::Error> {
-      let _api_key = credentials.get(self.credential_key);
-
+      let _game_ids = self.client.query_configured_game_ids(publisher).await?;
       todo!()
    }
 }

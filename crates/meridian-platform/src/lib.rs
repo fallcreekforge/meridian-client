@@ -8,6 +8,7 @@ use serde::{
    Deserialize,
    Serialize,
 };
+use thiserror::Error;
 
 pub mod steam;
 
@@ -64,20 +65,16 @@ pub struct PlatformGame {
    pub name:             String,
 }
 
+#[derive(Debug, Error)]
+pub enum ProducerError {
+   #[error(transparent)]
+   Steam(#[from] SteamError),
+}
+
 /// Capabilities local synchronization requires from a platform integration.
 #[async_trait]
-pub trait PlatformClient {
-   type Error;
-
+pub trait Producer {
    fn platform(&self) -> Platform;
 
-   async fn discover_games(
-      &self,
-      credentials: &(dyn CredentialStore + Send + Sync),
-   ) -> Result<Vec<PlatformGame>, Self::Error>;
-
-   async fn sync_game_financials(
-      &self,
-      credentials: &(dyn CredentialStore + Send + Sync),
-   ) -> Result<Vec<()>, Self::Error>;
+   async fn poll(self: Box<Self>, credentials: &dyn CredentialStore) -> Result<(), ProducerError>;
 }

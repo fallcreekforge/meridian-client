@@ -7,22 +7,20 @@ use super::api::{
 };
 
 pub struct SteamWebApiClient {
-   pub http: Client,
+   pub http_client: Client,
 }
 
 // TODO: move http client to top level shared resource
 impl SteamWebApiClient {
    #[must_use]
-   pub fn new() -> Self {
-      Self {
-         http: Client::new(),
-      }
+   pub fn new(http_client: Client) -> Self {
+      Self { http_client }
    }
 }
 
 #[async_trait]
 impl SteamClient for SteamWebApiClient {
-   async fn discover_games(
+   async fn query_configured_game_ids(
       &self,
       api_key: &meridian_credential_store::SecretString,
    ) -> Result<Vec<crate::PlatformGame>, SteamError> {
@@ -30,7 +28,7 @@ impl SteamClient for SteamWebApiClient {
       todo!()
    }
 
-   async fn sync_steam_game_financials(
+   async fn query_game_finances(
       &self,
       api_key: &meridian_credential_store::SecretString,
    ) -> Result<Vec<()>, SteamError> {

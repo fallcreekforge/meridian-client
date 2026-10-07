@@ -7,6 +7,7 @@ use std::{
       PathBuf,
    },
    process::ExitCode,
+   sync::Arc,
 };
 
 use clap::{
@@ -14,20 +15,30 @@ use clap::{
    Subcommand,
 };
 use meridian_cli::Config;
-use meridian_credential_store::{
-   CredentialKey,
-   FileCredentialStore,
-};
+use meridian_credential_store::FileCredentialStore;
 use meridian_local::SyncEngine;
 use meridian_platform::{
    Platform,
+   Producer,
    SteamSource,
    SteamWebApiClient,
 };
+use reqwest::Client;
 use serde_json::from_reader;
 
-const LINUX_CONFIG_FILE_DEFAULT_PATH: &str = "";
-const WINDOWS_CONFIG_FILE_DEFAULT_PATH: &str = "";
+// ########################
+// #        LINUX         #
+// ########################
+const LINUX_CONFIG_FILE_DEFAULT_PATH: &str = "/etc/meridian/config.json";
+#[expect(dead_code)]
+const LINUX_SQLITE_DEFAULT_PATH: &str = "/var/lib/meridian/state.db";
+
+// ########################
+// #       WINDOWS        #
+// ########################
+const WINDOWS_CONFIG_FILE_DEFAULT_PATH: &str = "~/AppData/Local/Meridian/config.json";
+#[expect(dead_code)]
+const WINDOWS_SQLITE_DEFAULT_PATH: &str = "~/AppData/Local/Meridian/config.json";
 
 #[expect(clippy::doc_paragraphs_missing_punctuation)]
 /// Meridian Client commands.
@@ -116,6 +127,8 @@ fn main() -> ExitCode {
       return ExitCode::FAILURE;
    };
 
+   let credential_store = Arc::new(credential_store);
+
    let configured_platforms: Vec<Platform> = config
       .platforms
       .iter()
@@ -135,17 +148,21 @@ fn main() -> ExitCode {
       .iter()
       .any(|plat| plat.eq(&Platform::Steam));
 
-   let steam_sync_engine = is_steam_configured.then(|| {
-      SyncEngine::new(
-         credential_store,
-         SteamSource::new(SteamWebApiClient::new(), CredentialKey::SteamFinancial),
-      )
-   });
+   let http_client = Client::new();
 
-   let Some(_steam_sync_engine) = steam_sync_engine else {
-      eprintln!("Error spawning sync engine!");
+   let steam_producer = is_steam_configured
+      .then(|| SteamSource::new(Box::new(SteamWebApiClient::new(http_client.clone()))));
+
+   let Some(steam_producer) = steam_producer else {
+      eprintln!("Error spawning Steam Data Producer!");
       return ExitCode::FAILURE;
    };
+
+   let steam_producer = Box::new(steam_producer);
+
+   let producers: Vec<Box<dyn Producer>> = vec![steam_producer];
+
+   let _sync_engine = SyncEngine::new(credential_store, producers);
 
    // TODO: match cmd { ... }
 

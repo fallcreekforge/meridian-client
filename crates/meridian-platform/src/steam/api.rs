@@ -6,20 +6,20 @@ use crate::PlatformGame;
 
 #[derive(Debug, Error)]
 pub enum SteamError {
-   #[error("Steam games are unavailable")]
-   GamesUnavailable,
+   #[error("Unrecognized game listed in configuration file")]
+   UnrecognizedGame,
 }
 
 /// Narrow Steam capabilities needed by Meridian Client's local sync engine.
 #[async_trait]
-pub trait SteamClient {
+pub trait SteamClient: Send + Sync {
    /// Returns the studio's games.
    ///
    /// Implementations must never log `api_key` or include it in errors.
-   async fn discover_games(&self, api_key: &SecretString) -> Result<Vec<PlatformGame>, SteamError>;
-
-   async fn sync_steam_game_financials(
+   async fn query_configured_game_ids(
       &self,
       api_key: &SecretString,
-   ) -> Result<Vec<()>, SteamError>;
+   ) -> Result<Vec<PlatformGame>, SteamError>;
+
+   async fn query_game_finances(&self, api_key: &SecretString) -> Result<Vec<()>, SteamError>;
 }
