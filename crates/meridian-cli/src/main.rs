@@ -14,7 +14,6 @@ use clap::{
    Parser,
    Subcommand,
 };
-use meridian_cli::Config;
 use meridian_credential_store::FileCredentialStore;
 use meridian_local::SyncEngine;
 use meridian_platform::{
@@ -25,6 +24,9 @@ use meridian_platform::{
 };
 use reqwest::Client;
 use serde_json::from_reader;
+
+mod config;
+use self::config::Config;
 
 // ########################
 // #        LINUX         #
@@ -132,14 +134,7 @@ fn main() -> ExitCode {
    let configured_platforms: Vec<Platform> = config
       .platforms
       .iter()
-      .flat_map(|plat| {
-         plat.keys().map(|plat| {
-            plat
-               .parse::<Platform>()
-               .expect("unrecognized platforms return Ok(Platfrom::Unimplemented)")
-         })
-      })
-      .filter(|plat| plat.eq(&Platform::Steam))
+      .flat_map(|platforms| platforms.keys().copied())
       .collect();
 
    // TODO: figure out how we want to iterate this list for

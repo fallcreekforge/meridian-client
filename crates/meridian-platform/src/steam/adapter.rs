@@ -3,6 +3,7 @@ use meridian_credential_store::{
    CredentialKey,
    CredentialStore,
 };
+use meridian_store::Ingest;
 
 use super::api::SteamClient;
 use crate::{
@@ -12,14 +13,16 @@ use crate::{
 };
 
 /// Connects a typed Steam client to the platform-neutral collection contract.
+#[expect(dead_code)]
 pub struct SteamSource {
    client: Box<dyn SteamClient>,
+   ingest: Box<dyn Ingest>,
 }
 
 impl SteamSource {
    #[must_use]
-   pub fn new(client: Box<dyn SteamClient>) -> Self {
-      Self { client }
+   pub fn new(client: Box<dyn SteamClient>, ingest: Box<dyn Ingest>) -> Self {
+      Self { client, ingest }
    }
 }
 

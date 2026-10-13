@@ -7,5 +7,6 @@
   treating one platform's workflow as the whole store.
 - Commit related state changes and outbound messages atomically through the transactional outbox.
 - Keep post-release migrations forward-only and non-destructive.
-- Keep database rows and query projections here; storage-neutral domain types belong outside the
-  persistence layer.
+- Keep database rows and query projections separate from the temporarily hosted shared types used
+  by persisted configuration and versioned outbox envelopes. Do not make those shared contracts
+  storage-specific; they are planned to move to the independent `meridian-types` package.

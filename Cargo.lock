@@ -1017,8 +1017,6 @@ dependencies = [
  "meridian-credential-store",
  "meridian-platform",
  "meridian-store",
- "serde",
- "serde_json",
  "thiserror",
  "tokio",
 ]
@@ -1029,8 +1027,8 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "meridian-credential-store",
+ "meridian-store",
  "reqwest",
- "serde",
  "thiserror",
  "tokio",
 ]
@@ -1039,7 +1037,10 @@ dependencies = [
 name = "meridian-store"
 version = "0.1.0"
 dependencies = [
+ "serde",
+ "serde_json",
  "sqlx",
+ "thiserror",
 ]
 
 [[package]]

@@ -11,12 +11,8 @@ async-trait.workspace               = true
 meridian-credential-store.workspace = true
 meridian-platform.workspace         = true
 meridian-store.workspace            = true
-serde.workspace                     = true
 thiserror.workspace                 = true
 tokio.workspace                     = true
-
-[dev-dependencies]
-serde_json.workspace = true
 
 [lints]
 workspace = true

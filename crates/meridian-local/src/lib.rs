@@ -1,17 +1,15 @@
 //! Reusable customer-side synchronization orchestration.
-mod protocol;
 
 use std::sync::Arc;
 
 use meridian_credential_store::CredentialStore;
 use meridian_platform::{
-   Platform,
    Producer,
    ProducerError,
 };
-pub use protocol::{
-   GamePlatformV1,
+pub use meridian_store::{
    GameV1,
+   Platform,
    ProtocolVersion,
    StudioId,
    SyncEnvelopeV1,
@@ -48,14 +46,6 @@ impl SyncEngine {
       }
 
       Ok(())
-   }
-}
-
-#[expect(dead_code)]
-const fn protocol_platform(platform: Platform) -> Option<GamePlatformV1> {
-   match platform {
-      Platform::Steam => Some(GamePlatformV1::Steam),
-      Platform::Unimplemented => None,
    }
 }
 

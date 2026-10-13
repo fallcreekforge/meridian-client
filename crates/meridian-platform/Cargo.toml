@@ -9,8 +9,8 @@ repository.workspace   = true
 [dependencies]
 async-trait.workspace               = true
 meridian-credential-store.workspace = true
+meridian-store.workspace            = true
 reqwest.workspace                   = true
-serde.workspace                     = true
 thiserror.workspace                 = true
 tokio.workspace                     = true
 

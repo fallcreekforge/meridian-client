@@ -7,10 +7,10 @@ use meridian_credential_store::{
 };
 use meridian_platform::{
    PlatformGame,
-   PlatformGameId,
    SteamClient,
    SteamError,
 };
+use meridian_store::PlatformGameId;
 
 #[expect(dead_code)]
 struct TestCredentialStore {
