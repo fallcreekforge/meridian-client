@@ -229,6 +229,7 @@
         {
           default = pkgs.mkShell {
             packages = [
+              pkgs.bacon
               rustToolchain
               fenix.packages.${system}.rust-analyzer
               pkgs.actionlint
