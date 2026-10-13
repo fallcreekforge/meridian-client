@@ -200,6 +200,7 @@
         {
           default = pkgs.mkShell {
             packages = [
+              pkgs.bacon
               rustToolchain
               rustfmt
               fenix.packages.${system}.rust-analyzer
