@@ -2,6 +2,7 @@
 
 Defines the common contract between platform integrations and local orchestration.
 
-`PlatformClient` discovers typed games using studio-controlled credentials. `Platform` remains an
-explicit enum so support for each new platform is deliberate and reviewable. Concrete API behavior
-belongs in crates such as `meridian-steam`.
+Platform support is explicit, typed, and limited to capabilities required by local orchestration.
+Adapters consume the foundation types owned by `meridian-store`, keep credentials inside
+studio-controlled infrastructure, and isolate concrete API behavior in platform-specific
+submodules.

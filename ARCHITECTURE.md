@@ -11,48 +11,82 @@ architecture changes.
 
 ## Current state
 
-Arrows below are normal workspace dependencies; the dashed arrow is test-only.
+Arrows below are normal workspace dependencies.
 
 ```text
-meridian-cli                 (standalone command parsing)
+meridian-cli                 (standalone command parsing and presentation)
 
 meridian-local ────────────► meridian-credential-store
        ├───────────────────► meridian-platform
-       ├───────────────────► meridian-sync-protocol ──► meridian-types
-       └───────────────────► meridian-types
-       └ - - dev/test - - -► meridian-steam
+       └───────────────────► meridian-store
 
 meridian-platform ─────────► meridian-credential-store
-       └───────────────────► meridian-types
+       └───────────────────► meridian-store
 
-meridian-steam ────────────► meridian-credential-store
-       └───────────────────► meridian-platform
+meridian-credential-store  (studio-controlled credential access)
+
+meridian-store              (SQLite persistence; temporary home of shared types)
 ```
-
-`SyncEngine` can produce a versioned envelope through injected credential and platform contracts.
-The CLI is not connected to it, and no real platform or cloud request is implemented.
 
 ## Target state
 
 ```text
-meridian CLI ── local IPC ──► meridian-agent
-                                  │
+meridian CLI
+  ├── agent (primary background runtime)
+  └── operator and development commands
+                         │
+                         ▼
+                 local orchestration
+                         │
 CredentialStore ──► typed platform adapter
                            (Steam and others)
-                                  │
-                                  ▼
-                              SyncEngine
-                                  │
-                       normalize / filter / validate
-                                  │
-                                  ▼
-                     public versioned sync protocol
+                         │
+                         ▼
+                collect / normalize / validate
+                         │
+                         ▼
+              local SQLite transaction
+       source data + watermarks + transactional outbox
+                         │
+                         ▼
+                    outbox delivery
+                         │
+                         ▼
+              public versioned sync protocol
 
 ════════════════════════ TRUST BOUNDARY ════════════════════════
 
                             Meridian Cloud
 ```
 
-The local core remains platform-neutral. Platform crates implement typed capabilities, and the
-public protocol explicitly limits what may cross the trust boundary. Platform credentials have no
-representation in that protocol.
+The planned shared-type dependency is separate from both product repositories:
+
+```text
+Meridian Client ──────────► meridian-types ◄────────── Meridian Cloud
+```
+
+The resident `agent` mode is the primary runtime; the other commands support setup, operation, and
+development. Command invocation semantics are not an architectural constraint.
+
+The local core remains platform-neutral and consumes `meridian-store` for durable state. In the
+current workspace, `meridian-store::types` declares the shared identifiers, supported-platform
+values, and versioned envelope types, and the crate root re-exports them for platform and local
+crates. The current re-exported surface is `StudioId`, `PlatformGameId`, `Platform`,
+`PlatformGame`, `ProtocolVersion`, `GameV1`, and `SyncEnvelopeV1`. This is a temporary placement in
+the lowest existing dependency layer, not persistence ownership of those contracts.
+
+The target is an independently versioned public `meridian-types` package outside both
+`meridian-client` and `meridian-cloud`. Both products will consume it directly; database rows,
+query projections, and other persistence-specific types will remain in `meridian-store`. Until
+Meridian Cloud development begins and that package is extracted, client crates consume the shared
+types through the `meridian-store` re-exports.
+
+For Steam financial collection, a completed transaction replaces every recalculated date,
+advances its durable watermark, and records the outbound protocol message in the outbox atomically.
+Outbox delivery can then retry independently without recollecting or losing acknowledged source
+state. The public protocol explicitly limits what may cross the trust boundary. Platform
+credentials have no representation in the store's outbox or in that protocol.
+
+Atlas manages schema changes during development. Release artifacts apply bundled, ordered
+migrations in a Flyway-style sequence. Post-release migrations are forward-only and
+non-destructive so upgrading cannot invalidate existing local state.
