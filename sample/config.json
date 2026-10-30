@@ -1,0 +1,9 @@
+{
+  "credentialsFile": "sample/secrets.json",
+  "games": [
+    {
+      "name": "Example Game",
+      "platforms": ["steam"]
+    }
+  ]
+}

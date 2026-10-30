@@ -2,13 +2,11 @@
 //!
 //! Implementations must not log secret values or include them in errors.
 
-use std::io;
-
+pub use meridian_utils::config_file::JsonFileError as CredentialStoreError;
 pub use secrecy::{
    ExposeSecret,
    SecretString,
 };
-use thiserror::Error;
 
 mod file_credential_store;
 mod secret_config;
@@ -21,21 +19,6 @@ pub enum CredentialKey {
    SteamPublisher,
    SteamFinancial,
    MeridianCloud,
-}
-
-type IoError = io::Error;
-type SerdeJsonError = serde_json::Error;
-
-#[derive(Debug, Error)]
-pub enum CredentialStoreError {
-   #[error("secret file type is not a json file")]
-   IncorrectFileType,
-
-   #[error("I/O error: {0}")]
-   Io(#[from] IoError),
-
-   #[error("serde_json error: {0}")]
-   SerdeJson(#[from] SerdeJsonError),
 }
 
 /// Retrieves credentials held inside studio-controlled infrastructure,

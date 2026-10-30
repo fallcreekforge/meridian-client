@@ -1,13 +1,7 @@
 use std::{
    env,
-   fs::File,
-   io,
-   path::{
-      Path,
-      PathBuf,
-   },
+   path::PathBuf,
    process::ExitCode,
-   sync::Arc,
 };
 
 use clap::{
@@ -15,15 +9,7 @@ use clap::{
    Subcommand,
 };
 use meridian_credential_store::FileCredentialStore;
-use meridian_local::SyncEngine;
-use meridian_platform::{
-   Platform,
-   Producer,
-   SteamSource,
-   SteamWebApiClient,
-};
-use reqwest::Client;
-use serde_json::from_reader;
+use meridian_utils::config_file::load_json_file;
 
 mod config;
 use self::config::Config;
@@ -38,7 +24,7 @@ const LINUX_SQLITE_DEFAULT_PATH: &str = "/var/lib/meridian/state.db";
 // ########################
 // #       WINDOWS        #
 // ########################
-const WINDOWS_CONFIG_FILE_DEFAULT_PATH: &str = "~/AppData/Local/Meridian/config.json";
+const WINDOWS_CONFIG_FILE_DEFAULT_PATH: &str = "Meridian/config.json";
 #[expect(dead_code)]
 const WINDOWS_SQLITE_DEFAULT_PATH: &str = "~/AppData/Local/Meridian/config.json";
 
@@ -60,7 +46,7 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
-   /// Reports local runtime status.
+   /// Checks local configuration and credential loading.
    Status {
       #[arg(short = 'c', long)]
       config: Option<PathBuf>,
@@ -78,7 +64,7 @@ enum Command {
 }
 
 fn main() -> ExitCode {
-   // Handles the case where meridian is invoked with `-v` or `--version`.
+   // Clap handles --version and -V before configuration is loaded.
    let Some(cmd) = Cli::parse().command else {
       return ExitCode::SUCCESS;
    };
@@ -90,76 +76,43 @@ fn main() -> ExitCode {
    };
 
    // Fallback to operating system defaults if not provided.
-   let config_file_path = config_file_path.as_deref().unwrap_or_else(|| {
-      match env::consts::OS {
-         "linux" => Path::new(LINUX_CONFIG_FILE_DEFAULT_PATH),
-         "windows" => Path::new(WINDOWS_CONFIG_FILE_DEFAULT_PATH),
-         _ => Path::new(""),
-      }
-   });
+   let default_config_file_path = match env::consts::OS {
+      "windows" => {
+         env::var_os("LOCALAPPDATA")
+            .map(|directory| PathBuf::from(directory).join(WINDOWS_CONFIG_FILE_DEFAULT_PATH))
+      },
+      "linux" => Some(PathBuf::from(LINUX_CONFIG_FILE_DEFAULT_PATH)),
+      _ => None,
+   };
+   let Some(config_file_path) = config_file_path
+      .as_deref()
+      .or(default_config_file_path.as_deref())
+   else {
+      eprintln!("ERROR: No default configuration location is available; use --config.");
+      return ExitCode::FAILURE;
+   };
 
-   // Validate the config file is a exists and is a supported format.
-   // Eventually, let's plan to actually parse json, but for now it is fine
-   // to just check the extension.
-   if !config_file_path
-      .extension()
-      .and_then(|ext| ext.to_str())
-      .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
-   {
-      eprintln!("ERROR: Invalid file format. The configuration file must be a valid JSON file.");
+   let config = match load_json_file::<Config>(config_file_path) {
+      Ok(config) => config,
+      Err(error) => {
+         eprintln!("ERROR: Could not load configuration: {error}.");
+         return ExitCode::FAILURE;
+      },
+   };
+
+   if let Err(error) = FileCredentialStore::load_from_file(config.credentials_file) {
+      eprintln!("ERROR: Could not load credentials: {error}.");
       return ExitCode::FAILURE;
    }
 
-   let Ok(file) = File::open(config_file_path) else {
-      eprintln!("ERROR: Invalid file format. The configuration file must be a valid JSON file.");
-      return ExitCode::FAILURE;
-   };
-
-   let reader = io::BufReader::new(file);
-
-   let config: Result<Config, serde_json::Error> = from_reader(reader);
-
-   let Ok(config) = config else {
-      let config_file_path = config_file_path.display();
-      eprintln!("ERROR: Error reading file {config_file_path}.");
-      return ExitCode::FAILURE;
-   };
-
-   let Ok(credential_store) = FileCredentialStore::load_from_file(config.secret_file_path) else {
-      return ExitCode::FAILURE;
-   };
-
-   let credential_store = Arc::new(credential_store);
-
-   let configured_platforms: Vec<Platform> = config
-      .platforms
-      .iter()
-      .flat_map(|platforms| platforms.keys().copied())
-      .collect();
-
-   // TODO: figure out how we want to iterate this list for
-   // future platforms and configurations of those platforms
-   let is_steam_configured = configured_platforms
-      .iter()
-      .any(|plat| plat.eq(&Platform::Steam));
-
-   let http_client = Client::new();
-
-   let steam_producer = is_steam_configured
-      .then(|| SteamSource::new(Box::new(SteamWebApiClient::new(http_client.clone()))));
-
-   let Some(steam_producer) = steam_producer else {
-      eprintln!("Error spawning Steam Data Producer!");
-      return ExitCode::FAILURE;
-   };
-
-   let steam_producer = Box::new(steam_producer);
-
-   let producers: Vec<Box<dyn Producer>> = vec![steam_producer];
-
-   let _sync_engine = SyncEngine::new(credential_store, producers);
-
-   // TODO: match cmd { ... }
-
-   todo!()
+   match cmd {
+      Command::Status { .. } => {
+         println!("Configuration and credentials loaded successfully.");
+         ExitCode::SUCCESS
+      },
+      Command::Sync { .. } | Command::Agent { .. } => {
+         eprintln!("ERROR: Sync and agent execution are not implemented yet.");
+         ExitCode::FAILURE
+      },
+   }
 }

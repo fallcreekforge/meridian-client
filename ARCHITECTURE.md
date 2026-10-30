@@ -14,7 +14,9 @@ architecture changes.
 Arrows below are normal workspace dependencies.
 
 ```text
-meridian-cli                 (standalone command parsing and presentation)
+meridian-cli ──────────────► meridian-platform
+       ├───────────────────► meridian-credential-store
+       └───────────────────► meridian-utils
 
 meridian-local ────────────► meridian-credential-store
        ├───────────────────► meridian-platform
@@ -23,10 +25,21 @@ meridian-local ────────────► meridian-credential-store
 meridian-platform ─────────► meridian-credential-store
        └───────────────────► meridian-store
 
-meridian-credential-store  (studio-controlled credential access)
+meridian-credential-store ─► meridian-utils
+
+meridian-utils              (shared utilities; typed JSON file loading)
 
 meridian-store              (SQLite persistence; temporary home of shared types)
 ```
+
+The CLI and file credential backend use `meridian-utils::config_file` for JSON extension checks,
+buffered reads, and deserialization. Callers own their schemas. The loader discards deserializer
+messages so invalid secret values cannot appear in errors.
+The non-secret configuration lists games by name with explicit platforms per game. The CLI's
+`status` command validates configuration and credential loading without constructing a runtime or
+contacting platforms. `--version` and `-V` exit before loading either file. Runtime wiring,
+name-to-ID resolution, and collection filtering remain planned; `sync` and `agent` report that
+execution is not implemented.
 
 ## Target state
 

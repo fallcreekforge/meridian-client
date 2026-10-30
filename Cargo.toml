@@ -5,6 +5,7 @@ members = [
   "crates/meridian-local",
   "crates/meridian-platform",
   "crates/meridian-store",
+  "crates/meridian-utils",
 ]
 resolver = "3"
 
@@ -19,6 +20,7 @@ version      = "0.1.0"
 meridian-credential-store = { path = "crates/meridian-credential-store" }
 meridian-platform         = { path = "crates/meridian-platform" }
 meridian-store            = { path = "crates/meridian-store" }
+meridian-utils            = { path = "crates/meridian-utils" }
 
 async-trait = "0.1.92"
 clap        = { features = [ "derive" ], version = "4" }

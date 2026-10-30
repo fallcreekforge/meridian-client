@@ -51,6 +51,7 @@
           fileset = lib.fileset.unions [
             ./Cargo.lock
             ./Cargo.toml
+            ./sample
             (lib.fileset.fileFilter (file: file.hasExt "rs" || file.name == "Cargo.toml") ./crates)
           ];
         };
