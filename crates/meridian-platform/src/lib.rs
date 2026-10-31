@@ -1,29 +1,36 @@
 //! Platform-neutral data collection inside the customer environment.
 
+use async_trait::async_trait;
 use meridian_credential_store::CredentialStore;
-use meridian_types::PlatformGameId;
+pub use meridian_store::{
+   Ingest,
+   Platform,
+   PlatformGame,
+   PlatformGameId,
+};
+use thiserror::Error;
 
-/// A supported external platform.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Platform {
-   Steam,
-}
+pub mod steam;
 
-/// A game discovered through an external platform.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct PlatformGame {
-   pub platform_game_id: PlatformGameId,
-   pub name:             String,
+pub use steam::{
+   adapter::SteamSource,
+   api::{
+      SteamClient,
+      SteamError,
+   },
+   web_api::SteamWebApiClient,
+};
+
+#[derive(Debug, Error)]
+pub enum ProducerError {
+   #[error(transparent)]
+   Steam(#[from] SteamError),
 }
 
 /// Capabilities local synchronization requires from a platform integration.
-pub trait PlatformClient {
-   type Error;
-
+#[async_trait]
+pub trait Producer: Send + Sync {
    fn platform(&self) -> Platform;
 
-   fn discover_games(
-      &self,
-      credentials: &dyn CredentialStore,
-   ) -> Result<Vec<PlatformGame>, Self::Error>;
+   async fn poll(&self, credentials: &dyn CredentialStore) -> Result<(), ProducerError>;
 }

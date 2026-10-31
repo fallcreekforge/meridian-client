@@ -39,4 +39,8 @@ jobs:
       - name: Smoke test release binary
         run: |
           .\target\release\meridian.exe --version
-          .\target\release\meridian.exe status
+          if ($LASTEXITCODE -ne 0) { throw "--version failed" }
+          .\target\release\meridian.exe -V
+          if ($LASTEXITCODE -ne 0) { throw "-V failed" }
+          .\target\release\meridian.exe status --config .\sample\config.json
+          if ($LASTEXITCODE -ne 0) { throw "status failed" }

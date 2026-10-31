@@ -1,7 +1,9 @@
 # meridian-local
 
-Contains reusable customer-side synchronization logic.
+Owns reusable customer-side synchronization orchestration.
 
-`SyncEngine` collects games through the platform-neutral `PlatformClient` contract and maps them
-into `meridian-sync-protocol` types. Platform and credential implementations can change without
-changing orchestration. The CLI is not connected yet.
+`SyncEngine` polls platform-neutral producers and supplies local credential access. Platform
+adapters own their typed clients and injected ingestion handles; they coordinate collection and
+ingestion while `meridian-store` owns persistence operations and transaction mechanics. Local
+orchestration does not own platform-specific queries, database implementation, cloud transport,
+or CLI concerns. Scheduling and outbox coordination remain planned.
