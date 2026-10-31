@@ -1014,7 +1014,6 @@ dependencies = [
  "async-trait",
  "meridian-credential-store",
  "meridian-platform",
- "meridian-store",
  "thiserror",
  "tokio",
 ]
@@ -1028,7 +1027,6 @@ dependencies = [
  "meridian-store",
  "reqwest",
  "thiserror",
- "tokio",
 ]
 
 [[package]]

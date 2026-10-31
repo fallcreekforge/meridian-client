@@ -16,6 +16,9 @@ pub enum ProtocolVersion {
 }
 
 /// A game approved for synchronization.
+///
+/// This versioned allowlist remains separate from platform discovery records so
+/// adding locally collected fields cannot expand the outbound payload.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct GameV1 {

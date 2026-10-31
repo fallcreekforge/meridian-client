@@ -7,13 +7,6 @@ use meridian_platform::{
    Producer,
    ProducerError,
 };
-pub use meridian_store::{
-   GameV1,
-   Platform,
-   ProtocolVersion,
-   StudioId,
-   SyncEnvelopeV1,
-};
 use thiserror::Error;
 use tokio::sync::Notify;
 

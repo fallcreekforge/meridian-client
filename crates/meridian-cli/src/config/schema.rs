@@ -15,6 +15,8 @@ pub struct Config {
    pub games:            Vec<GameConfig>,
 }
 
+/// A title selected by name across explicit platforms, before local ID
+/// resolution.
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct GameConfig {

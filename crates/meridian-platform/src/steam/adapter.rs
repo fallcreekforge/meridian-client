@@ -3,10 +3,10 @@ use meridian_credential_store::{
    CredentialKey,
    CredentialStore,
 };
-use meridian_store::Ingest;
 
 use super::api::SteamClient;
 use crate::{
+   Ingest,
    Platform,
    Producer,
    ProducerError,

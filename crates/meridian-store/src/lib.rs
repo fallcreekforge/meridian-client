@@ -52,15 +52,6 @@ impl Outbox {
 
 #[derive(Debug, Error)]
 pub enum OutboxError {
-   #[error("failed to connect to Meridian database at {path}")]
-   FailedToConnect { path: String },
-
-   #[error("failed to connect to Meridian database at {path}")]
-   FailedToClose { path: String },
-
-   #[error("attempted to use database before connecting")]
-   NotConnected,
-
    #[error(transparent)]
    Sqlx(#[from] sqlx::Error),
 }

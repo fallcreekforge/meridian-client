@@ -9,5 +9,10 @@ persistence, platform adapters, and local orchestration. These types live in
 choice. They are planned to move into an independently versioned public `meridian-types` package
 shared with Meridian Cloud; storage-specific types will remain here.
 
+Platform adapters receive ingestion handles through the `Ingest` contract and coordinate writes
+for their collected data. SQLite operations and atomic source-data, checkpoint, and outbox
+updates belong in this crate. The current ingestion contract and dispatch implementations are
+scaffolding; their operations and transaction behavior are not implemented yet.
+
 Atlas manages schema changes during development. Released clients apply bundled, ordered migrations
 in a Flyway-style sequence. Post-release migrations are forward-only and non-destructive.

@@ -15,8 +15,10 @@ meridian-credential-store.workspace = true
 meridian-platform.workspace         = true
 meridian-utils.workspace            = true
 
-clap.workspace       = true
-serde.workspace      = true
+clap.workspace  = true
+serde.workspace = true
+
+[dev-dependencies]
 serde_json.workspace = true
 
 [lints]

@@ -3,6 +3,7 @@
 use async_trait::async_trait;
 use meridian_credential_store::CredentialStore;
 pub use meridian_store::{
+   Ingest,
    Platform,
    PlatformGame,
    PlatformGameId,

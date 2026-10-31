@@ -2,7 +2,7 @@
 //!
 //! Implementations must not log secret values or include them in errors.
 
-pub use meridian_utils::config_file::JsonFileError as CredentialStoreError;
+pub use meridian_utils::config_file::JsonFileError;
 pub use secrecy::{
    ExposeSecret,
    SecretString,
@@ -22,7 +22,7 @@ pub enum CredentialKey {
 }
 
 /// Retrieves credentials held inside studio-controlled infrastructure,
-/// returning an owned `SecretString`.
+/// returning a borrowed `SecretString`.
 pub trait CredentialStore: Send + Sync {
    fn get(&self, key: CredentialKey) -> &SecretString;
 }

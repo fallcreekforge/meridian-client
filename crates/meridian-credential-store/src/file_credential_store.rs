@@ -3,12 +3,12 @@
 use std::path::Path;
 
 use meridian_utils::config_file::load_json_file;
-use secrecy::SecretString;
 
 use crate::{
    CredentialKey,
    CredentialStore,
-   CredentialStoreError,
+   JsonFileError,
+   SecretString,
    secret_config::SecretConfig,
 };
 
@@ -19,7 +19,7 @@ pub struct FileCredentialStore {
 
 impl FileCredentialStore {
    /// Loads credentials from a customer-controlled JSON file.
-   pub fn load_from_file(secret_file_path: impl AsRef<Path>) -> Result<Self, CredentialStoreError> {
+   pub fn load_from_file(secret_file_path: impl AsRef<Path>) -> Result<Self, JsonFileError> {
       Ok(Self {
          config: load_json_file(secret_file_path)?,
       })

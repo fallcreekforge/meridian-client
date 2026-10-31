@@ -1,5 +1,6 @@
-use secrecy::SecretString;
 use serde::Deserialize;
+
+use crate::SecretString;
 
 #[expect(clippy::struct_field_names)]
 #[derive(Deserialize, Debug)]
