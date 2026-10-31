@@ -17,16 +17,20 @@ use self::config::Config;
 // ########################
 // #        LINUX         #
 // ########################
-const LINUX_CONFIG_FILE_DEFAULT_PATH: &str = "/etc/meridian/config.json";
+// Relative to XDG_CONFIG_HOME (fallback: $HOME/.config) and XDG_STATE_HOME
+// (fallback: $HOME/.local/state), respectively.
+const LINUX_CONFIG_FILE_DEFAULT_RELATIVE_PATH: &str = "meridian/config.json";
 #[expect(dead_code)]
-const LINUX_SQLITE_DEFAULT_PATH: &str = "/var/lib/meridian/state.db";
+const LINUX_SQLITE_DEFAULT_RELATIVE_PATH: &str = "meridian/state.db";
 
 // ########################
 // #       WINDOWS        #
 // ########################
-const WINDOWS_CONFIG_FILE_DEFAULT_PATH: &str = "Meridian/config.json";
+// Per-user paths relative to LOCALAPPDATA; resolve the base directory at
+// runtime.
+const WINDOWS_CONFIG_FILE_DEFAULT_RELATIVE_PATH: &str = "Meridian/config.json";
 #[expect(dead_code)]
-const WINDOWS_SQLITE_DEFAULT_PATH: &str = "~/AppData/Local/Meridian/config.json";
+const WINDOWS_SQLITE_DEFAULT_RELATIVE_PATH: &str = "Meridian/state.db";
 
 #[expect(clippy::doc_paragraphs_missing_punctuation)]
 /// Meridian Client commands.
@@ -78,12 +82,25 @@ fn main() -> ExitCode {
    // Fallback to operating system defaults if not provided.
    let default_config_file_path = match env::consts::OS {
       "windows" => {
-         env::var_os("LOCALAPPDATA")
-            .map(|directory| PathBuf::from(directory).join(WINDOWS_CONFIG_FILE_DEFAULT_PATH))
+         env::var_os("LOCALAPPDATA").map(|directory| {
+            PathBuf::from(directory).join(WINDOWS_CONFIG_FILE_DEFAULT_RELATIVE_PATH)
+         })
       },
-      "linux" => Some(PathBuf::from(LINUX_CONFIG_FILE_DEFAULT_PATH)),
+      "linux" => {
+         env::var_os("XDG_CONFIG_HOME")
+            .map(PathBuf::from)
+            .filter(|directory| directory.is_absolute())
+            .or_else(|| {
+               env::var_os("HOME")
+                  .map(PathBuf::from)
+                  .filter(|directory| directory.is_absolute())
+                  .map(|home| home.join(".config"))
+            })
+            .map(|directory| directory.join(LINUX_CONFIG_FILE_DEFAULT_RELATIVE_PATH))
+      },
       _ => None,
    };
+
    let Some(config_file_path) = config_file_path
       .as_deref()
       .or(default_config_file_path.as_deref())

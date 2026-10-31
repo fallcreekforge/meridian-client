@@ -74,7 +74,14 @@ fn assert_no_credentials(output: &Output) {
 fn version_flags_work_without_configuration_or_credentials() {
    let directory = SmokeDirectory::new();
    for flag in ["--version", "-V"] {
-      let output = directory.command().arg(flag).output().unwrap();
+      let output = directory
+         .command()
+         .env_remove("HOME")
+         .env_remove("XDG_CONFIG_HOME")
+         .env_remove("LOCALAPPDATA")
+         .arg(flag)
+         .output()
+         .unwrap();
       assert!(output.status.success());
       assert_eq!(
          String::from_utf8(output.stdout).unwrap().trim(),
@@ -178,6 +185,80 @@ fn windows_status_uses_local_app_data_for_the_default_configuration() {
       .command()
       .env("LOCALAPPDATA", local_app_data)
       .arg("status")
+      .output()
+      .unwrap();
+   assert!(output.status.success());
+   assert!(output.stderr.is_empty());
+   assert_no_credentials(&output);
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn linux_status_uses_xdg_config_home_before_home() {
+   let directory = SmokeDirectory::new();
+   directory.write_samples();
+   let xdg_config_home = directory.0.join("custom config");
+   let config_directory = xdg_config_home.join("meridian");
+   fs::create_dir_all(&config_directory).unwrap();
+   fs::copy(
+      directory.0.join("sample/config.json"),
+      config_directory.join("config.json"),
+   )
+   .unwrap();
+   let output = directory
+      .command()
+      .env("XDG_CONFIG_HOME", xdg_config_home)
+      .env("HOME", directory.0.join("unused home"))
+      .arg("status")
+      .output()
+      .unwrap();
+   assert!(output.status.success());
+   assert!(output.stderr.is_empty());
+   assert_no_credentials(&output);
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn linux_status_falls_back_to_home_for_unset_empty_or_relative_xdg_paths() {
+   let directory = SmokeDirectory::new();
+   directory.write_samples();
+   let home = directory.0.join("user home");
+   let config_directory = home.join(".config/meridian");
+   fs::create_dir_all(&config_directory).unwrap();
+   fs::copy(
+      directory.0.join("sample/config.json"),
+      config_directory.join("config.json"),
+   )
+   .unwrap();
+   for xdg_config_home in [None, Some(""), Some("relative config")] {
+      let mut command = directory.command();
+      command.env("HOME", &home).env_remove("XDG_CONFIG_HOME");
+      if let Some(value) = xdg_config_home {
+         command.env("XDG_CONFIG_HOME", value);
+      }
+      let output = command.arg("status").output().unwrap();
+      assert!(output.status.success());
+      assert!(output.stderr.is_empty());
+      assert_no_credentials(&output);
+   }
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn linux_requires_an_explicit_config_when_user_directories_are_unavailable() {
+   let directory = SmokeDirectory::new();
+   directory.write_samples();
+   let mut command = directory.command();
+   command
+      .env_remove("HOME")
+      .env_remove("XDG_CONFIG_HOME")
+      .arg("status");
+   let output = command.output().unwrap();
+   assert!(!output.status.success());
+   assert!(String::from_utf8_lossy(&output.stderr).contains("use --config"));
+
+   let output = command
+      .args(["--config", "sample/config.json"])
       .output()
       .unwrap();
    assert!(output.status.success());

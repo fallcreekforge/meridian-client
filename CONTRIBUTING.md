@@ -7,6 +7,9 @@ nix develop
 just ci
 ```
 
+The development shell includes the SQLite CLI (`sqlite3`) for inspecting local databases and
+trying schema changes.
+
 `just ci` runs the repository gate defined by the flake. Keep CI agent, cache, and signing
 credentials out of the repository.
 

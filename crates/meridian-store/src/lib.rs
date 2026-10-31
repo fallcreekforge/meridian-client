@@ -5,13 +5,18 @@ use std::path::Path;
 
 use sqlx::{
    SqlitePool,
-   sqlite::SqlitePoolOptions,
+   sqlite::{
+      SqliteConnectOptions,
+      SqlitePoolOptions,
+   },
 };
 use thiserror::Error;
 
 pub mod dispatch;
 pub mod ingest;
 pub mod types;
+
+#[cfg(test)] mod database_tests;
 
 // TODO: `meridian-types` should be a seperate package
 // allowing for both `meridian-client` and `meridian-cloud` to share the same
@@ -30,17 +35,19 @@ pub use types::{
 
 /// `Outbox` is responsible for schema migrations
 /// along with providing Ingestion and Dispatch handles.
-#[expect(dead_code)]
+#[cfg_attr(not(test), expect(dead_code))]
 pub struct Outbox {
    // combined_collector: CombinedCollector,
    pool: SqlitePool,
 }
 
 impl Outbox {
+   /// Opens an existing SQLite database using its literal filesystem path.
    pub async fn open(path: impl AsRef<Path>) -> Result<Self, OutboxError> {
-      let database_url = format!("sqlite://{}", path.as_ref().to_string_lossy());
-
-      let pool = SqlitePoolOptions::new().connect(&database_url).await?;
+      let options = SqliteConnectOptions::new()
+         .filename(path)
+         .foreign_keys(true);
+      let pool = SqlitePoolOptions::new().connect_with(options).await?;
 
       // TODO: enumerate migration scripts and apply to backend.
 

@@ -52,7 +52,9 @@
             ./Cargo.lock
             ./Cargo.toml
             ./sample
-            (lib.fileset.fileFilter (file: file.hasExt "rs" || file.name == "Cargo.toml") ./crates)
+            (lib.fileset.fileFilter (
+              file: file.hasExt "rs" || file.hasExt "sql" || file.name == "Cargo.toml"
+            ) ./crates)
           ];
         };
 
@@ -209,6 +211,7 @@
               pkgs.nushell
               pkgs.git
               pkgs.just
+              pkgs.sqlite
               pkgs.nixfmt
               pkgs.stdenv.cc
               pkgs.statix

@@ -17,9 +17,19 @@ relative paths are resolved from the process working directory.
 connectivity or whether an agent is running. `sync` and `agent` currently return an explicit
 not-implemented error. Local name-to-ID resolution and per-game collection filtering remain planned.
 
-`--version` (or `-V`) prints the version without requiring configuration or credentials. On Windows,
-the default configuration path is `%LOCALAPPDATA%\Meridian\config.json`; on Linux it is
-`/etc/meridian/config.json`.
+`--version` (or `-V`) prints the version without requiring configuration or credentials.
+
+| Default | Windows (per user) | Linux (per user) |
+| --- | --- | --- |
+| Configuration | `%LOCALAPPDATA%\Meridian\config.json` | `$XDG_CONFIG_HOME/meridian/config.json` (fallback: `$HOME/.config/meridian/config.json`) |
+| SQLite state (reserved; not wired into the CLI yet) | `%LOCALAPPDATA%\Meridian\state.db` | `$XDG_STATE_HOME/meridian/state.db` (fallback: `$HOME/.local/state/meridian/state.db`) |
+
+Path constants are relative to the corresponding user directory. The config loader resolves
+`LOCALAPPDATA` on Windows, or `XDG_CONFIG_HOME` with the `HOME` fallback on Linux, at runtime.
+Unset, empty, or relative XDG directory values use the fallback; a usable home directory must
+also be absolute. No literal `~` is passed to filesystem APIs. If the default location is
+unavailable, pass `--config` explicitly. Both platforms use per-user defaults; a shared service
+installation would need a separately chosen machine-wide location.
 
 From the repository root, run `meridian status --config sample/config.json` to use the sample
 configuration and synthetic credentials in `sample/secrets.json`. These are smoke-test fixtures;

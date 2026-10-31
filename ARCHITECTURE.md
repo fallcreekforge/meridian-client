@@ -34,6 +34,16 @@ meridian-store              (SQLite persistence; temporary home of shared types)
 The CLI and file credential backend use `meridian-utils::config_file` for JSON extension checks,
 buffered reads, and deserialization. Callers own their schemas. The loader discards deserializer
 messages so invalid secret values cannot appear in errors.
+
+Configuration lookup uses per-user defaults, with an explicit path taking precedence:
+
+```text
+--config supplied ────────► explicit configuration file
+Linux default ───────────► $XDG_CONFIG_HOME/meridian/config.json
+                           (fallback: $HOME/.config/meridian/config.json)
+Windows default ─────────► %LOCALAPPDATA%\Meridian\config.json
+```
+
 The non-secret configuration lists games by name with explicit platforms per game. The CLI's
 `status` command validates configuration and credential loading without constructing a runtime or
 contacting platforms. `--version` and `-V` exit before loading either file. Runtime wiring,
@@ -43,7 +53,14 @@ execution is not implemented.
 `SyncEngine` polls platform-neutral `Producer` implementations. `SteamSource` owns an injected
 `SteamClient` and `meridian-store::Ingest` handle, placing collection and ingestion coordination
 inside the platform adapter. The store owns persistence operations. This ownership is scaffolded:
-`Ingest` has no operations yet, and the Steam polling path does not yet persist collected data.
+`Ingest` is a marker contract without database operations.
+
+The database opener treats its argument as an existing filesystem path, preserving filename
+characters rather than interpreting them as URL syntax. Pooled connections enforce foreign keys.
+
+```text
+filesystem Path ──────► SQLite connection options ──────► Outbox pool
+```
 
 ## Target state
 
@@ -85,12 +102,12 @@ Meridian Client ──────────► meridian-types ◄────
 The resident `agent` mode is the primary runtime; the other commands support setup, operation, and
 development. Command invocation semantics are not an architectural constraint.
 
-The local core remains platform-neutral and currently depends on the credential and platform
+The local core remains platform-neutral and depends on the credential and platform
 contracts. Its planned outbox coordination will use the store directly. Platform adapters depend
 on the store's ingestion contracts, with SQLite implementation details kept in the store.
-In the current workspace, `meridian-store::types` declares the shared identifiers, supported-platform
+Within the workspace, `meridian-store::types` declares the shared identifiers, supported-platform
 values, and versioned envelope types, and the crate root re-exports them for platform and local
-crates. The current re-exported surface is `StudioId`, `PlatformGameId`, `Platform`,
+crates. The shared re-exported surface is `StudioId`, `PlatformGameId`, `Platform`,
 `PlatformGame`, `ProtocolVersion`, `GameV1`, and `SyncEnvelopeV1`. This is a temporary placement in
 the lowest existing dependency layer, not persistence ownership of those contracts.
 
@@ -125,6 +142,6 @@ Outbox delivery can then retry independently without recollecting or losing ackn
 state. The public protocol explicitly limits what may cross the trust boundary. Platform
 credentials have no representation in the store's outbox or in that protocol.
 
-Atlas manages schema changes during development. Release artifacts apply bundled, ordered
-migrations in a Flyway-style sequence. Post-release migrations are forward-only and
+Schema changes use a declarative development workflow. Release artifacts apply bundled migrations
+in version order. Post-release migrations are forward-only and
 non-destructive so upgrading cannot invalidate existing local state.
