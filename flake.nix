@@ -229,6 +229,16 @@
             TAPLO_CONFIG = "${./taplo.toml}";
 
             shellHook = ''
+              if [ "$(git rev-parse --show-toplevel 2>/dev/null)" = "$PWD" ] && [ -f .githooks/pre-commit ]; then
+                hooks_path=$(git config --get core.hooksPath || true)
+                if [ -z "$hooks_path" ]; then
+                  just hooks-install
+                elif [ "$hooks_path" != ".githooks" ]; then
+                  echo "Preserving custom Git hooks path: $hooks_path"
+                  echo "Run 'just hooks-install' to enable this repository's hooks."
+                fi
+              fi
+
               # Make an interactive development shell Nushell by default. The
               # TTY check preserves `nix develop -c <command>` for automation.
               if [ -t 0 ] && [ -z "''${NU_VERSION:-}" ]; then

@@ -1,5 +1,10 @@
 set shell := ["nu", "-c"]
 
+hooks-install:
+   git config --local core.hooksPath .githooks
+
+pre-commit: fmt lint nix-fmt nix-lint toml-fmt gha-lint
+
 fmt:
    cargo fmt --all -- --check
 
