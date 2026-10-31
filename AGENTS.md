@@ -15,13 +15,8 @@
   repository.
 - Update the current-state diagram in the same PR as any component, dependency, or runtime-flow
   change.
-- Keep cross-repository product and domain decisions in `fallcreekforge-docs`.
-- For external documentation, read the relevant context in the `fallcreekforge-docs` submodule
-  when available.
 - Read `SECURITY.md` before changing credentials, protocols, transports, logging, or the
   customer-to-cloud trust boundary.
-- Update an ADR in `fallcreekforge-docs/meridian/meridian-client/adr` only when an architectural
-  contract changes.
 - Follow crate-local `AGENTS.md` files for boundary-specific rules.
 
 During development, run the smallest checks relevant to the change.

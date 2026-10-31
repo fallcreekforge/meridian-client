@@ -30,6 +30,5 @@ nightly `rustfmt` required by `rustfmt.toml`. When updating toolchains, update
 
 Keep changes small and preserve the dependency direction in [ARCHITECTURE.md](ARCHITECTURE.md).
 Update its current-state diagram when a PR changes components, dependencies, or runtime data flow.
-Protocol expansions require security review. Architectural contract changes require a concise ADR
-in `fallcreekforge-docs/meridian/meridian-client/adr`.
+Protocol expansions require security review.
 Never use real credentials in development or tests.

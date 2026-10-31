@@ -1,4 +1,4 @@
-exclude = [ ".direnv/**", "**/target/**", "fallcreekforge-docs/**" ]
+exclude = [ ".direnv/**", "**/target/**" ]
 
 [formatting]
 align_entries         = true
