@@ -1,5 +1,4 @@
 use std::{
-   env,
    path::PathBuf,
    process::ExitCode,
 };
@@ -12,25 +11,10 @@ use meridian_credential_store::FileCredentialStore;
 use meridian_utils::config_file::load_json_file;
 
 mod config;
-use self::config::Config;
-
-// ########################
-// #        LINUX         #
-// ########################
-// Relative to XDG_CONFIG_HOME (fallback: $HOME/.config) and XDG_STATE_HOME
-// (fallback: $HOME/.local/state), respectively.
-const LINUX_CONFIG_FILE_DEFAULT_RELATIVE_PATH: &str = "meridian/config.json";
-#[expect(dead_code)]
-const LINUX_SQLITE_DEFAULT_RELATIVE_PATH: &str = "meridian/state.db";
-
-// ########################
-// #       WINDOWS        #
-// ########################
-// Per-user paths relative to LOCALAPPDATA; resolve the base directory at
-// runtime.
-const WINDOWS_CONFIG_FILE_DEFAULT_RELATIVE_PATH: &str = "Meridian/config.json";
-#[expect(dead_code)]
-const WINDOWS_SQLITE_DEFAULT_RELATIVE_PATH: &str = "Meridian/state.db";
+use self::config::{
+   Config,
+   default_config_path,
+};
 
 #[expect(clippy::doc_paragraphs_missing_punctuation)]
 /// Meridian Client commands.
@@ -80,26 +64,7 @@ fn main() -> ExitCode {
    };
 
    // Fallback to operating system defaults if not provided.
-   let default_config_file_path = match env::consts::OS {
-      "windows" => {
-         env::var_os("LOCALAPPDATA").map(|directory| {
-            PathBuf::from(directory).join(WINDOWS_CONFIG_FILE_DEFAULT_RELATIVE_PATH)
-         })
-      },
-      "linux" => {
-         env::var_os("XDG_CONFIG_HOME")
-            .map(PathBuf::from)
-            .filter(|directory| directory.is_absolute())
-            .or_else(|| {
-               env::var_os("HOME")
-                  .map(PathBuf::from)
-                  .filter(|directory| directory.is_absolute())
-                  .map(|home| home.join(".config"))
-            })
-            .map(|directory| directory.join(LINUX_CONFIG_FILE_DEFAULT_RELATIVE_PATH))
-      },
-      _ => None,
-   };
+   let default_config_file_path = default_config_path();
 
    let Some(config_file_path) = config_file_path
       .as_deref()
@@ -117,6 +82,14 @@ fn main() -> ExitCode {
       },
    };
 
+   let database_path = match config.resolve_database_path(config_file_path) {
+      Ok(path) => path,
+      Err(error) => {
+         eprintln!("ERROR: {error}");
+         return ExitCode::FAILURE;
+      },
+   };
+
    if let Err(error) = FileCredentialStore::load_from_file(config.credentials_file) {
       eprintln!("ERROR: Could not load credentials: {error}.");
       return ExitCode::FAILURE;
@@ -125,6 +98,7 @@ fn main() -> ExitCode {
    match cmd {
       Command::Status { .. } => {
          println!("Configuration and credentials loaded successfully.");
+         println!("Database path: {}", database_path.display());
          ExitCode::SUCCESS
       },
       Command::Sync { .. } | Command::Agent { .. } => {

@@ -42,11 +42,17 @@ Configuration lookup uses per-user defaults, with an explicit path taking preced
 Linux default ───────────► $XDG_CONFIG_HOME/meridian/config.json
                            (fallback: $HOME/.config/meridian/config.json)
 Windows default ─────────► %LOCALAPPDATA%\Meridian\config.json
+
+databasePath supplied ───► absolute path or path relative to configuration directory
+Linux database default ──► $XDG_STATE_HOME/meridian/state.db
+                           (fallback: $HOME/.local/state/meridian/state.db)
+Windows database default ► %LOCALAPPDATA%\Meridian\state.db
 ```
 
 The non-secret configuration lists games by name with explicit platforms per game. The CLI's
-`status` command validates configuration and credential loading without constructing a runtime or
-contacting platforms. `--version` and `-V` exit before loading either file. Runtime wiring,
+`status` command validates configuration and credential loading and reports the resolved database
+path without opening the database, constructing a runtime, or contacting platforms.
+`--version` and `-V` exit before loading either file. Runtime wiring,
 name-to-ID resolution, and collection filtering remain planned; `sync` and `agent` report that
 execution is not implemented.
 
