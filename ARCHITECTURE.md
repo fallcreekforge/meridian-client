@@ -62,9 +62,21 @@ inside the platform adapter. The store owns persistence operations. This ownersh
 
 The database opener treats its argument as an existing filesystem path, preserving filename
 characters rather than interpreting them as URL syntax. Pooled connections enforce foreign keys.
+Before creating the pool, `Outbox::open` applies embedded SQL migrations on a dedicated connection.
+Pending migrations and SQLx history commit atomically after a foreign-key integrity check.
+Populated databases without SQLx migration history are rejected.
 
 ```text
-filesystem Path ──────► SQLite connection options ──────► Outbox pool
+existing filesystem Path ──► dedicated migration connection (foreign keys disabled)
+                                         │
+embedded migrations ──────► transaction: apply SQL + record SQLx history
+                                         │
+                              check foreign keys and commit
+                                         │
+                              close migration connection
+                                         │
+                                         ▼
+                              Outbox pool (foreign keys enabled)
 ```
 
 Development migration generation and PR checks use an isolated database:

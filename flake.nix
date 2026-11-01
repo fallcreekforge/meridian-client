@@ -52,6 +52,7 @@
             ./Cargo.lock
             ./Cargo.toml
             ./sample
+            ./crates/meridian-store/migrations
             (lib.fileset.fileFilter (
               file: file.hasExt "rs" || file.hasExt "sql" || file.name == "Cargo.toml"
             ) ./crates)

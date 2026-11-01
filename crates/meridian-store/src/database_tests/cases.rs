@@ -1,70 +1,12 @@
-use std::{
-   env,
-   fs,
-   path::PathBuf,
-   process,
-   sync::atomic::{
-      AtomicU64,
-      Ordering,
-   },
-};
+use std::fs;
 
 use sqlx::error::DatabaseError;
 
+use super::support::TestDatabase;
 use crate::{
    Outbox,
    OutboxError,
 };
-
-static NEXT_DATABASE: AtomicU64 = AtomicU64::new(0);
-
-struct TestDatabase {
-   directory: PathBuf,
-   path:      PathBuf,
-}
-
-impl TestDatabase {
-   #[expect(
-      clippy::create_dir,
-      reason = "Fail if the isolated test directory already exists."
-   )]
-   fn new() -> Self {
-      let directory = env::temp_dir().join(format!(
-         "meridian-database-{}-{}",
-         process::id(),
-         NEXT_DATABASE.fetch_add(1, Ordering::Relaxed)
-      ));
-      fs::create_dir(&directory).unwrap();
-      let path = directory.join("state %23.db");
-      fs::File::options()
-         .write(true)
-         .create_new(true)
-         .open(&path)
-         .unwrap();
-      Self { directory, path }
-   }
-
-   async fn open(&self) -> Outbox {
-      let outbox = Outbox::open(&self.path)
-         .await
-         .expect("open the test database");
-      sqlx::raw_sql(include_str!("../../schema.sql"))
-         .execute(&outbox.pool)
-         .await
-         .unwrap();
-      sqlx::raw_sql(include_str!("../../tests/fixtures/database.sql"))
-         .execute(&outbox.pool)
-         .await
-         .unwrap();
-      outbox
-   }
-}
-
-impl Drop for TestDatabase {
-   fn drop(&mut self) {
-      let _ = fs::remove_dir_all(&self.directory);
-   }
-}
 
 #[tokio::test]
 async fn database_paths_are_used_literally() {

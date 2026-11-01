@@ -5,6 +5,10 @@ use std::path::Path;
 
 use sqlx::{
    SqlitePool,
+   migrate::{
+      MigrateError,
+      Migrator,
+   },
    sqlite::{
       SqliteConnectOptions,
       SqlitePoolOptions,
@@ -14,6 +18,7 @@ use thiserror::Error;
 
 pub mod dispatch;
 pub mod ingest;
+mod migrations;
 pub mod types;
 
 #[cfg(test)] mod database_tests;
@@ -42,14 +47,18 @@ pub struct Outbox {
 }
 
 impl Outbox {
-   /// Opens an existing SQLite database using its literal filesystem path.
+   /// Opens an existing SQLite database and applies its bundled pending
+   /// migrations.
    pub async fn open(path: impl AsRef<Path>) -> Result<Self, OutboxError> {
+      Self::open_with_migrator(path.as_ref(), &migrations::BUNDLED).await
+   }
+
+   async fn open_with_migrator(path: &Path, migrator: &Migrator) -> Result<Self, OutboxError> {
+      migrations::apply(path, migrator).await?;
       let options = SqliteConnectOptions::new()
          .filename(path)
          .foreign_keys(true);
       let pool = SqlitePoolOptions::new().connect_with(options).await?;
-
-      // TODO: enumerate migration scripts and apply to backend.
 
       Ok(Self { pool })
    }
@@ -61,4 +70,15 @@ impl Outbox {
 pub enum OutboxError {
    #[error(transparent)]
    Sqlx(#[from] sqlx::Error),
+   #[error(transparent)]
+   Migration(#[from] MigrateError),
+   #[error(
+      "Database has schema without SQLx migration history; use an empty database or restore a \
+       versioned backup."
+   )]
+   UnversionedDatabase,
+   #[error("Migration would leave foreign-key violations; the migration batch was rolled back.")]
+   ForeignKeyViolation,
+   #[error("Migration {0} disables transactions; SQLite startup migrations must be transactional.")]
+   NonTransactionalMigration(i64),
 }

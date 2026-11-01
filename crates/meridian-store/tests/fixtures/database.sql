@@ -6,5 +6,5 @@ CREATE TABLE test_parent (
 
 CREATE TABLE test_child (
     id INTEGER PRIMARY KEY,
-    parent_id INTEGER NOT NULL REFERENCES test_parent (id)
+    parent_id INTEGER NOT NULL REFERENCES test_parent (id) ON DELETE CASCADE
 );
