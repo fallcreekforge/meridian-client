@@ -23,6 +23,7 @@ meridian-store            = { path = "crates/meridian-store" }
 meridian-utils            = { path = "crates/meridian-utils" }
 
 async-trait = "0.1.92"
+bon         = "3.10"
 clap        = { features = [ "derive" ], version = "4" }
 reqwest     = { features = [ "json" ], version = "0.13" }
 serde       = { features = [ "derive" ], version = "1" }

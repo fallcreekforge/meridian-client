@@ -8,6 +8,7 @@ repository.workspace   = true
 
 [dependencies]
 async-trait.workspace               = true
+bon.workspace                       = true
 meridian-credential-store.workspace = true
 meridian-store.workspace            = true
 reqwest.workspace                   = true

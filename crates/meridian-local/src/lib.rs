@@ -19,7 +19,11 @@ pub struct SyncEngine {
    outbox_notify:    Arc<Notify>,
 }
 
+#[bon::bon]
 impl SyncEngine {
+   /// Creates an engine with required credentials and producers, initializing
+   /// its notification handle internally.
+   #[builder(start_fn = builder)]
    #[must_use]
    pub fn new(
       credential_store: Arc<dyn CredentialStore>,

@@ -19,7 +19,10 @@ pub struct SteamSource {
    ingest: Box<dyn Ingest>,
 }
 
+#[bon::bon]
 impl SteamSource {
+   /// Creates a source with a required client and ingestion handle.
+   #[builder(start_fn = builder)]
    #[must_use]
    pub fn new(client: Box<dyn SteamClient>, ingest: Box<dyn Ingest>) -> Self {
       Self { client, ingest }
