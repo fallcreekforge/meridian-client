@@ -49,12 +49,11 @@ Linux database default ──► $XDG_STATE_HOME/meridian/state.db
 Windows database default ► %LOCALAPPDATA%\Meridian\state.db
 ```
 
-The non-secret configuration lists games by name with explicit platforms per game. The CLI's
-`status` command validates configuration and credential loading and reports the resolved database
-path without opening the database, constructing a runtime, or contacting platforms.
-`--version` and `-V` exit before loading either file. Runtime wiring,
-name-to-ID resolution, and collection filtering remain planned; `sync` and `agent` report that
-execution is not implemented.
+The non-secret configuration lists games by name with explicit platforms per game.
+The CLI's `status` command validates configuration and credential loading and reports the
+resolved database path without opening the database, constructing a runtime, or contacting platforms.
+Runtime wiring, name-to-ID resolution, and collection filtering remain planned;
+`sync` and `agent` report that execution is not implemented.
 
 `SyncEngine` polls platform-neutral `Producer` implementations. `SteamSource` owns an injected
 `SteamClient` and `meridian-store::Ingest` handle, placing collection and ingestion coordination
@@ -67,6 +66,23 @@ characters rather than interpreting them as URL syntax. Pooled connections enfor
 ```text
 filesystem Path ──────► SQLite connection options ──────► Outbox pool
 ```
+
+Development migration generation and PR checks use an isolated database:
+
+```text
+origin/main migration history ──► isolated SQLite baseline
+                                         │
+branch schema.sql ──► generate SQL delta ──┤
+                                         ▼
+                              replay delta and compare schema
+                                         │
+                                         ▼
+                         migrations/<version>_<name>.sql + checksum
+```
+
+PR checks compare against the PR base commit, permit at most one new SQL migration, preserve
+merged migration files, and verify that replay produces the declared schema. The developer's
+database is independent of migration generation and verification.
 
 ## Target state
 

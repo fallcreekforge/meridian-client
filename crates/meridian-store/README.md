@@ -17,8 +17,54 @@ database operations.
 Develop the schema declaratively. Released clients apply bundled migrations in version order.
 Post-release migrations are forward-only and non-destructive.
 
-Edit [`schema.sql`](schema.sql) as the declarative development schema. Before the first release,
-generate a baseline migration from the agreed schema in [`migrations/`](migrations/).
+Edit [`schema.sql`](schema.sql) as the declarative development schema. Versioned SQL migrations
+and their checksum file belong in [`migrations/`](migrations/).
+
+From the repository root inside the development shell, use `.local/meridian.db` as the
+development database. Git ignores `.local/`, including SQLite journal and WAL files.
+
+```nu
+just db-init
+just db-inspect
+just db-diff
+just db-apply
+```
+
+Each command accepts an optional database file path, such as `just db-diff /tmp/example.db`.
+Relative paths are resolved from the repository root. Custom locations are outside the `.local/`
+ignore rule. The development database location is separate from the agent's configured runtime path.
+
+`db-init` creates the parent directory and initializes the database from `schema.sql` in a
+transaction; it refuses to overwrite an existing database. `db-diff` prints the SQL needed to match
+`schema.sql`. `db-apply` previews changes and asks for confirmation before applying them. Both use
+an in-memory scratch database to evaluate the schema.
+These helpers operate on a development database and do not generate versioned migration files.
+
+After editing the schema, generate the PR's migration:
+
+```nu
+just db-migration create_games
+just db-migrations-check
+```
+
+Generation fetches `origin/main` and requires it to be an ancestor of the branch. Update the
+branch with main before generating a migration. The generator reconstructs main's migration
+history in an isolated SQLite database, verifies it against main's schema, and generates one SQL
+migration to the working tree's schema. It applies that migration to the isolated database and
+verifies the result before writing the migration and checksum file. It never uses `.local/meridian.db`.
+An absent schema and migration history on main define an empty bootstrap baseline.
+
+A PR may add at most one SQL migration. Existing merged migrations cannot be edited, deleted, or
+reordered. The checksum file is excluded from the SQL file count. Code-only changes require no
+migration; a schema change must be reproducible by replaying the PR migrations from its base.
+Preserve hand-written SQL before removing an unmerged migration and regenerating it.
+Views and triggers require explicit migration SQL; their stored definitions must match
+`schema.sql` exactly. The replay check compares these definitions directly in SQLite.
+
+The PR workflow checks this policy and schema replay against the PR's base commit. Require the
+`Migration policy and replay` status check in repository branch protection to block merges on
+failure. Run `just db-migrations-check <base-revision>` to check a specific base locally.
+
 Repository-wide end-to-end tests and synthetic fixture scripts belong in the top-level
 [`tests/`](../../tests/README.md) directory.
 

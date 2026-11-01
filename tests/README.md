@@ -12,3 +12,8 @@ discovered. Register each test target in the appropriate crate manifest with an 
 when adding an executable test. Crate-specific tests can continue to live with their crate.
 
 Database connection and transaction tests belong to `meridian-store`, alongside its SQL fixtures.
+
+[`migrations.nu`](migrations.nu) exercises migration generation and PR policy using isolated Git
+repositories and SQLite databases. Run it with
+`nix develop .#migrations -c nu tests/migrations.nu scripts/database-migrations.nu`.
+The flake's `migration-workflow` check runs the same scenarios.

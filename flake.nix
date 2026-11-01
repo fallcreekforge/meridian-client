@@ -188,6 +188,23 @@
         meridian-client = meridianClient;
         repository-quality = repositoryQuality;
         meridian-client-windows-x86_64 = meridianClientWindowsX86_64;
+        migration-workflow =
+          let
+            pkgs = pkgsFor ciSystem;
+          in
+          pkgs.runCommand "meridian-client-migration-workflow"
+            {
+              nativeBuildInputs = [
+                pkgs.atlas
+                pkgs.git
+                pkgs.nushell
+                pkgs.sqlite
+              ];
+            }
+            ''
+              nu ${./tests/migrations.nu} ${./scripts/database-migrations.nu}
+              touch "$out"
+            '';
       };
 
       devShells = forAllDevelopmentSystems (
@@ -201,6 +218,16 @@
           };
         in
         {
+          migrations = pkgs.mkShell {
+            packages = [
+              pkgs.atlas
+              pkgs.git
+              pkgs.just
+              pkgs.nushell
+              pkgs.sqlite
+            ];
+          };
+
           default = pkgs.mkShell {
             packages = [
               pkgs.bacon
@@ -211,6 +238,7 @@
               pkgs.nushell
               pkgs.git
               pkgs.just
+              pkgs.atlas
               pkgs.sqlite
               pkgs.nixfmt
               pkgs.stdenv.cc
