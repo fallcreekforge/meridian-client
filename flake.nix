@@ -52,7 +52,10 @@
             ./Cargo.lock
             ./Cargo.toml
             ./sample
-            (lib.fileset.fileFilter (file: file.hasExt "rs" || file.name == "Cargo.toml") ./crates)
+            ./crates/meridian-store/migrations
+            (lib.fileset.fileFilter (
+              file: file.hasExt "rs" || file.hasExt "sql" || file.name == "Cargo.toml"
+            ) ./crates)
           ];
         };
 
@@ -186,6 +189,23 @@
         meridian-client = meridianClient;
         repository-quality = repositoryQuality;
         meridian-client-windows-x86_64 = meridianClientWindowsX86_64;
+        migration-workflow =
+          let
+            pkgs = pkgsFor ciSystem;
+          in
+          pkgs.runCommand "meridian-client-migration-workflow"
+            {
+              nativeBuildInputs = [
+                pkgs.atlas
+                pkgs.git
+                pkgs.nushell
+                pkgs.sqlite
+              ];
+            }
+            ''
+              nu ${./tests/migrations.nu} ${./scripts/database-migrations.nu}
+              touch "$out"
+            '';
       };
 
       devShells = forAllDevelopmentSystems (
@@ -199,6 +219,16 @@
           };
         in
         {
+          migrations = pkgs.mkShell {
+            packages = [
+              pkgs.atlas
+              pkgs.git
+              pkgs.just
+              pkgs.nushell
+              pkgs.sqlite
+            ];
+          };
+
           default = pkgs.mkShell {
             packages = [
               pkgs.bacon
@@ -209,6 +239,8 @@
               pkgs.nushell
               pkgs.git
               pkgs.just
+              pkgs.atlas
+              pkgs.sqlite
               pkgs.nixfmt
               pkgs.stdenv.cc
               pkgs.statix
@@ -226,6 +258,16 @@
             TAPLO_CONFIG = "${./taplo.toml}";
 
             shellHook = ''
+              if [ "$(git rev-parse --show-toplevel 2>/dev/null)" = "$PWD" ] && [ -f .githooks/pre-commit ]; then
+                hooks_path=$(git config --get core.hooksPath || true)
+                if [ -z "$hooks_path" ]; then
+                  just hooks-install
+                elif [ "$hooks_path" != ".githooks" ]; then
+                  echo "Preserving custom Git hooks path: $hooks_path"
+                  echo "Run 'just hooks-install' to enable this repository's hooks."
+                fi
+              fi
+
               # Make an interactive development shell Nushell by default. The
               # TTY check preserves `nix develop -c <command>` for automation.
               if [ -t 0 ] && [ -z "''${NU_VERSION:-}" ]; then

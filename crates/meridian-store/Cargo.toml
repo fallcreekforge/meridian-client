@@ -8,11 +8,12 @@ repository.workspace   = true
 
 [dependencies]
 serde.workspace     = true
-sqlx.workspace      = true
+sqlx                = { features = [ "macros", "migrate" ], workspace = true }
 thiserror.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true
+tokio.workspace      = true
 
 [lints]
 workspace = true

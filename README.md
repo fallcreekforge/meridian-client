@@ -32,8 +32,6 @@ binary-cache credentials remain outside this repository.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md), [SECURITY.md](SECURITY.md), and
 [CONTRIBUTING.md](CONTRIBUTING.md) for repository-specific details.
-Cross-repository product documentation lives in the
-[`fallcreekforge-docs`](fallcreekforge-docs/meridian/meridian-client) submodule.
 
 ## License
 

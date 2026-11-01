@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+
+exec nix develop -c just pre-commit

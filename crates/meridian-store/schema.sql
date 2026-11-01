@@ -1,0 +1,2 @@
+-- Declarative SQLite schema.
+-- Define tables, indexes, and constraints here.

@@ -12,6 +12,8 @@ use serde::{
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Config {
    pub credentials_file: PathBuf,
+   #[serde(default, skip_serializing_if = "Option::is_none")]
+   pub database_path:    Option<PathBuf>,
    pub games:            Vec<GameConfig>,
 }
 

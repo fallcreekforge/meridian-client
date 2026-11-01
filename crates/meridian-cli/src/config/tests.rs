@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use meridian_platform::Platform;
 use serde_json::json;
 
@@ -13,10 +15,26 @@ fn games_have_names_and_explicit_platforms() {
       ]
    });
    let config: Config = serde_json::from_value(value.clone()).unwrap();
+   assert!(config.database_path.is_none());
    assert_eq!(config.games[0].name, "Example Game");
    assert_eq!(config.games[0].platforms, [Platform::Steam]);
    assert_eq!(config.games[1].name, "Another Game");
    assert!(config.games[1].platforms.is_empty());
+   assert_eq!(serde_json::to_value(config).unwrap(), value);
+}
+
+#[test]
+fn database_path_round_trips_when_supplied() {
+   let value = json!({
+      "credentialsFile": "secrets.json",
+      "databasePath": "volume/state.db",
+      "games": []
+   });
+   let config: Config = serde_json::from_value(value.clone()).unwrap();
+   assert_eq!(
+      config.database_path.as_deref(),
+      Some(Path::new("volume/state.db"))
+   );
    assert_eq!(serde_json::to_value(config).unwrap(), value);
 }
 

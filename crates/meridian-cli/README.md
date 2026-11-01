@@ -13,13 +13,29 @@ This replaces the former platform maps and `allowedGames` lists. Unknown platfor
 configuration fields are rejected. `credentialsFile` points to a separate JSON credential file;
 relative paths are resolved from the process working directory.
 
+`databasePath` is optional and selects the SQLite file. Absolute paths support persistent volumes;
+relative paths are resolved against the configuration file's directory. An empty path is rejected.
+Omitting it selects the per-user SQLite default below. If no default is available, set
+`databasePath` explicitly.
+
 `status` checks that configuration and credentials can be loaded; it does not check platform
-connectivity or whether an agent is running. `sync` and `agent` currently return an explicit
+connectivity or whether an agent is running. It reports the resolved database path without opening
+or creating the database or its parent directories. `sync` and `agent` return an explicit
 not-implemented error. Local name-to-ID resolution and per-game collection filtering remain planned.
 
-`--version` (or `-V`) prints the version without requiring configuration or credentials. On Windows,
-the default configuration path is `%LOCALAPPDATA%\Meridian\config.json`; on Linux it is
-`/etc/meridian/config.json`.
+`--version` (or `-V`) prints the version without requiring configuration or credentials.
+
+| Default | Windows (per user) | Linux (per user) |
+| --- | --- | --- |
+| Configuration | `%LOCALAPPDATA%\Meridian\config.json` | `$XDG_CONFIG_HOME/meridian/config.json` (fallback: `$HOME/.config/meridian/config.json`) |
+| SQLite state | `%LOCALAPPDATA%\Meridian\state.db` | `$XDG_STATE_HOME/meridian/state.db` (fallback: `$HOME/.local/state/meridian/state.db`) |
+
+Default paths are relative to the corresponding user directory. Path resolution uses
+`LOCALAPPDATA` on Windows, or `XDG_CONFIG_HOME` and `XDG_STATE_HOME` with the `HOME` fallbacks on Linux.
+Unset, empty, or relative XDG directory values use the fallback; a usable home directory must
+also be absolute. No literal `~` is passed to filesystem APIs. If the default location is
+unavailable, pass `--config` explicitly. Both platforms use per-user defaults; a shared service
+installation would need a separately chosen machine-wide location.
 
 From the repository root, run `meridian status --config sample/config.json` to use the sample
 configuration and synthetic credentials in `sample/secrets.json`. These are smoke-test fixtures;

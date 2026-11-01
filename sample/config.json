@@ -1,5 +1,6 @@
 {
   "credentialsFile": "sample/secrets.json",
+  "databasePath": "state.db",
   "games": [
     {
       "name": "Example Game",

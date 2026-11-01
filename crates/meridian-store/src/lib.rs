@@ -5,13 +5,23 @@ use std::path::Path;
 
 use sqlx::{
    SqlitePool,
-   sqlite::SqlitePoolOptions,
+   migrate::{
+      MigrateError,
+      Migrator,
+   },
+   sqlite::{
+      SqliteConnectOptions,
+      SqlitePoolOptions,
+   },
 };
 use thiserror::Error;
 
 pub mod dispatch;
 pub mod ingest;
+mod migrations;
 pub mod types;
+
+#[cfg(test)] mod database_tests;
 
 // TODO: `meridian-types` should be a seperate package
 // allowing for both `meridian-client` and `meridian-cloud` to share the same
@@ -30,19 +40,25 @@ pub use types::{
 
 /// `Outbox` is responsible for schema migrations
 /// along with providing Ingestion and Dispatch handles.
-#[expect(dead_code)]
+#[cfg_attr(not(test), expect(dead_code))]
 pub struct Outbox {
    // combined_collector: CombinedCollector,
    pool: SqlitePool,
 }
 
 impl Outbox {
+   /// Opens an existing SQLite database and applies its bundled pending
+   /// migrations.
    pub async fn open(path: impl AsRef<Path>) -> Result<Self, OutboxError> {
-      let database_url = format!("sqlite://{}", path.as_ref().to_string_lossy());
+      Self::open_with_migrator(path.as_ref(), &migrations::BUNDLED).await
+   }
 
-      let pool = SqlitePoolOptions::new().connect(&database_url).await?;
-
-      // TODO: enumerate migration scripts and apply to backend.
+   async fn open_with_migrator(path: &Path, migrator: &Migrator) -> Result<Self, OutboxError> {
+      migrations::apply(path, migrator).await?;
+      let options = SqliteConnectOptions::new()
+         .filename(path)
+         .foreign_keys(true);
+      let pool = SqlitePoolOptions::new().connect_with(options).await?;
 
       Ok(Self { pool })
    }
@@ -54,4 +70,15 @@ impl Outbox {
 pub enum OutboxError {
    #[error(transparent)]
    Sqlx(#[from] sqlx::Error),
+   #[error(transparent)]
+   Migration(#[from] MigrateError),
+   #[error(
+      "Database has schema without SQLx migration history; use an empty database or restore a \
+       versioned backup."
+   )]
+   UnversionedDatabase,
+   #[error("Migration would leave foreign-key violations; the migration batch was rolled back.")]
+   ForeignKeyViolation,
+   #[error("Migration {0} disables transactions; SQLite startup migrations must be transactional.")]
+   NonTransactionalMigration(i64),
 }
