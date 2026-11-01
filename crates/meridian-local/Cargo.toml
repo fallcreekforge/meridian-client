@@ -7,6 +7,7 @@ license.workspace      = true
 repository.workspace   = true
 
 [dependencies]
+bon.workspace                       = true
 meridian-credential-store.workspace = true
 meridian-platform.workspace         = true
 thiserror.workspace                 = true
