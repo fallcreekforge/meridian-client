@@ -1,7 +1,7 @@
 def fixture [root: path name: string] {
     let directory = ($root | path join $name)
     mkdir ($directory | path join "crates/meridian-store/migrations")
-    "" | save ($directory | path join "crates/meridian-store/schema.sql")
+    "-- Synthetic declarative SQLite schema.\n" | save ($directory | path join "crates/meridian-store/schema.sql")
     ".local/\n" | save ($directory | path join ".gitignore")
     git init --quiet --initial-branch main $directory | ignore
     git -C $directory config user.name "Synthetic migration test" | ignore
@@ -38,11 +38,11 @@ def main [migration_script: path] {
     let migrations = "crates/meridian-store/migrations"
     try {
         cd (fixture $root "generation")
-        expect-pass (nu $script check | complete) "code-only change with no history"
+        expect-pass (nu $script check | complete) "code-only change with a comment-only schema and no history"
         expect-pass (nu $script generate no_change | complete) "skip migration generation for an unchanged schema"
         mkdir .local
         sqlite3 .local/meridian.db "CREATE TABLE unrelated_local_drift (id INTEGER);" | ignore
-        "CREATE TABLE games (id INTEGER PRIMARY KEY, name TEXT NOT NULL);" | save --force $schema
+        "-- Synthetic declarative SQLite schema.\nCREATE TABLE games (id INTEGER PRIMARY KEY, name TEXT NOT NULL);" | save --force $schema
         expect-failure (nu $script check | complete) "schema change without migration" "PR migrations do not produce"
         expect-pass (nu $script generate create_games | complete) "generate from main despite local database drift"
         mut generated = (glob $"($migrations)/*.sql" | first)

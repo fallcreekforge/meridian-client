@@ -1,8 +1,12 @@
 const schema = "crates/meridian-store/schema.sql"
 const migrations = "crates/meridian-store/migrations"
 
-def --wrapped checked [command: string ...arguments: string] {
-    let result = (^$command ...$arguments | complete)
+def --wrapped checked [--input: string command: string ...arguments: string] {
+    let result = (if $input == null {
+        ^$command ...$arguments | complete
+    } else {
+        $input | ^$command ...$arguments | complete
+    })
     if $result.exit_code != 0 {
         error make {msg: $"($command) failed:\n($result.stderr)\n($result.stdout)"}
     }
@@ -48,7 +52,7 @@ def assert-schema [database: path desired: path message: string] {
     }
     # Compare objects omitted by the schema comparison engine using SQLite itself.
     let query = "SELECT type, name, sql FROM sqlite_schema WHERE type IN ('view', 'trigger') ORDER BY type, name;"
-    let expected = (checked sqlite3 -json :memory: $"(open --raw $desired)\n($query)" | str trim)
+    let expected = (checked --input $"(open --raw $desired)\n($query)" sqlite3 -json :memory: | str trim)
     let actual = (checked sqlite3 -json $database $query | str trim)
     if $actual != $expected {
         error make {msg: $"($message) Views and triggers must match schema.sql exactly; supply explicit migration SQL for these objects."}
