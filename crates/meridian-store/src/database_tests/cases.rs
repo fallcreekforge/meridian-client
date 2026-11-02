@@ -100,6 +100,6 @@ async fn rollback_after_a_constraint_failure_leaves_no_partial_rows() {
 #[tokio::test]
 async fn opening_an_unavailable_database_returns_a_storage_error() {
    let database = TestDatabase::new();
-   let result = Outbox::open(database.directory.join("missing/state.db")).await;
+   let result = Outbox::open(database.directory.join("missing/meridian.db")).await;
    assert!(matches!(result, Err(OutboxError::Sqlx(_))));
 }

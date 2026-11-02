@@ -13,11 +13,9 @@ use thiserror::Error;
 pub mod steam;
 
 pub use steam::{
+   SteamClient,
+   SteamError,
    adapter::SteamSource,
-   api::{
-      SteamClient,
-      SteamError,
-   },
    web_api::SteamWebApiClient,
 };
 

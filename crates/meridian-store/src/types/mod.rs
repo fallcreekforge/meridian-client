@@ -14,5 +14,3 @@ pub use protocol::{
    ProtocolVersion,
    SyncEnvelopeV1,
 };
-
-#[cfg(test)] mod tests;

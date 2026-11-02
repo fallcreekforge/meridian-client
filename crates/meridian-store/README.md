@@ -5,14 +5,13 @@ schema migrations, transactions, persisted records, query projections, and the t
 outbox consumed by local orchestration. It also declares the platform-neutral identifiers,
 supported-platform values, and versioned envelope types shared by
 persistence, platform adapters, and local orchestration. These types live in
-`meridian-store::types` and are re-exported from the crate root as a temporary dependency-layer
-choice. They are planned to move into an independently versioned public `meridian-types` package
-shared with Meridian Cloud; storage-specific types will remain here.
+`meridian-store::types` and are re-exported from the crate root. See
+[Architecture: Current state](../../ARCHITECTURE.md#current-state) for shared-type placement
+and implementation status.
 
 Platform adapters receive ingestion handles through the `Ingest` contract and coordinate writes
 for their collected data. SQLite operations and atomic source-data, checkpoint, and outbox
-updates belong in this crate. The ingestion and dispatch traits are marker contracts with no
-database operations.
+updates belong in this crate.
 
 Develop the schema declaratively. Released clients apply bundled migrations in version order.
 Post-release migrations are forward-only and non-destructive.
@@ -55,9 +54,8 @@ closes before the runtime pool enables enforcement. Migration errors roll back t
 scripts that opt out of transactions are rejected. Back up runtime databases before upgrades:
 transaction rollback does not provide downgrade migrations or undo a successful data change.
 
-TODO: Define and test recovery when an application rollback follows a successful database
-migration, including schema compatibility checks and restoration from a compatible backup.
-Automatic reversal of committed migrations is unsupported.
+Automatic reversal of committed migrations is unsupported. Recovery work is tracked in
+[Architecture: Current state](../../ARCHITECTURE.md#current-state).
 
 After editing the schema, generate the PR's migration:
 
@@ -93,8 +91,8 @@ tables from [`tests/fixtures/database.sql`](tests/fixtures/database.sql), then v
 paths, committed data after reopening, foreign-key enforcement, rollback, and open failures.
 Separate migration fixtures verify history creation, replay, checksum validation, unversioned
 database rejection, atomic failure, and preservation of referencing rows during table rebuilds.
-These tests cover connection, migration, and transaction behavior; domain ingestion and dispatch guarantees
-need tests against their database operations.
+These tests cover connection, migration, and transaction behavior. Domain ingestion and dispatch
+tests belong alongside their database operations.
 
 Express reusable database operations with parameterized SQL and Rust transaction methods.
 SQLite does not provide a `CREATE PROCEDURE` statement.

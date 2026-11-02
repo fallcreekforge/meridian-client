@@ -7,9 +7,9 @@ operator and development commands use the same reusable behavior from `meridian-
 
 Pass `--config /path/to/config.json` to select a JSON configuration file. See
 [`sample/config.json`](../../sample/config.json) for an example. Each entry in `games` has a
-human-readable `name` and an explicit list of `platforms` on which to collect that game (currently
-only `steam` is supported). Platforms omitted from a game are outside its collection scope.
-This replaces the former platform maps and `allowedGames` lists. Unknown platforms and unknown
+human-readable `name` and an explicit list of `platforms` on which to collect that game.
+The supported platform value is `steam`. Platforms omitted from a game are outside its collection
+scope. Unknown platforms and unknown
 configuration fields are rejected. `credentialsFile` points to a separate JSON credential file;
 relative paths are resolved from the process working directory.
 
@@ -20,15 +20,15 @@ Omitting it selects the per-user SQLite default below. If no default is availabl
 
 `status` checks that configuration and credentials can be loaded; it does not check platform
 connectivity or whether an agent is running. It reports the resolved database path without opening
-or creating the database or its parent directories. `sync` and `agent` return an explicit
-not-implemented error. Local name-to-ID resolution and per-game collection filtering remain planned.
+or creating the database or its parent directories. See
+[Architecture: Current state](../../ARCHITECTURE.md#current-state) for command implementation status.
 
 `--version` (or `-V`) prints the version without requiring configuration or credentials.
 
 | Default | Windows (per user) | Linux (per user) |
 | --- | --- | --- |
 | Configuration | `%LOCALAPPDATA%\Meridian\config.json` | `$XDG_CONFIG_HOME/meridian/config.json` (fallback: `$HOME/.config/meridian/config.json`) |
-| SQLite state | `%LOCALAPPDATA%\Meridian\state.db` | `$XDG_STATE_HOME/meridian/state.db` (fallback: `$HOME/.local/state/meridian/state.db`) |
+| SQLite state | `%LOCALAPPDATA%\Meridian\meridian.db` | `$XDG_STATE_HOME/meridian/meridian.db` (fallback: `$HOME/.local/state/meridian/meridian.db`) |
 
 Default paths are relative to the corresponding user directory. Path resolution uses
 `LOCALAPPDATA` on Windows, or `XDG_CONFIG_HOME` and `XDG_STATE_HOME` with the `HOME` fallbacks on Linux.
@@ -44,4 +44,4 @@ configure a private credential file for actual use.
 The credential file requires `meridianCloudKey`, `steamFinancialWebApiKey`, and
 `steamPublisherWebApiKey` string fields. Keep real credentials out of ordinary configuration.
 Both files use the shared loader in `meridian-utils::config_file`. Errors report file access or
-JSON/schema failure without echoing file contents. Commands are still under development.
+JSON/schema failure without echoing file contents.

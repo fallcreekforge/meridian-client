@@ -9,13 +9,13 @@ pub trait Dispatch: Send + Sync {
    // TODO: domain specific queries
 }
 
-#[expect(dead_code)]
 pub struct CombinedDispatcher {
+   #[expect(dead_code)]
    collectors: Vec<Box<dyn Dispatch>>,
 }
 
-#[expect(dead_code)]
 impl CombinedDispatcher {
+   #[expect(dead_code)]
    pub(crate) fn new(platforms: &[Platform]) -> Self {
       let collectors = platforms
          .iter()

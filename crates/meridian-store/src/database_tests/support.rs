@@ -37,7 +37,7 @@ impl TestDatabase {
          NEXT_DATABASE.fetch_add(1, Ordering::Relaxed)
       ));
       fs::create_dir(&directory).unwrap();
-      let path = directory.join("state %23.db");
+      let path = directory.join("meridian %23.db");
       fs::File::options()
          .write(true)
          .create_new(true)

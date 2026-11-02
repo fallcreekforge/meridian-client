@@ -7,6 +7,6 @@
   treating one platform's workflow as the whole store.
 - Commit related state changes and outbound messages atomically through the transactional outbox.
 - Keep post-release migrations forward-only and non-destructive.
-- Keep database rows and query projections separate from the temporarily hosted shared types used
+- Keep database rows and query projections separate from the shared types used
   by persisted configuration and versioned outbox envelopes. Do not make those shared contracts
-  storage-specific; they are planned to move to the independent `meridian-types` package.
+  storage-specific. Shared-type ownership and extraction status belong in `ARCHITECTURE.md`.
