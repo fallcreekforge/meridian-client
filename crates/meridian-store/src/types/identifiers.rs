@@ -9,7 +9,6 @@ use serde::{
 pub struct StudioId(String);
 
 impl StudioId {
-   #[must_use]
    pub fn new(value: impl Into<String>) -> Self {
       Self(value.into())
    }
@@ -26,7 +25,6 @@ impl StudioId {
 pub struct PlatformGameId(String);
 
 impl PlatformGameId {
-   #[must_use]
    pub fn new(value: impl Into<String>) -> Self {
       Self(value.into())
    }

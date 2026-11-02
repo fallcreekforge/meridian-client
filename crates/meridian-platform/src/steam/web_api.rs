@@ -1,6 +1,6 @@
 use reqwest::Client;
 
-use super::api::SteamClient;
+use super::SteamClient;
 
 pub struct SteamWebApiClient {
    pub http_client: Client,

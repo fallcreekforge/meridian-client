@@ -153,7 +153,7 @@ fn version_flags_work_without_configuration_or_credentials() {
 fn status_loads_sample_configuration_and_credentials_offline() {
    let directory = SmokeDirectory::with_samples();
    let output = directory.status().output().unwrap();
-   assert_database_path(&output, &Path::new("sample").join("state.db"));
+   assert_database_path(&output, &Path::new("sample").join("meridian.db"));
    assert!(
       String::from_utf8_lossy(&output.stdout)
          .contains("Configuration and credentials loaded successfully.")
@@ -165,12 +165,12 @@ fn database_overrides_resolve_from_config_without_creating_files() {
    let directory = SmokeDirectory::with_samples();
    for (path, expected) in [
       (
-         PathBuf::from("volume/state.db"),
-         directory.0.join("sample").join("volume/state.db"),
+         PathBuf::from("volume/meridian.db"),
+         directory.0.join("sample").join("volume/meridian.db"),
       ),
       (
-         directory.0.join("persistent/state.db"),
-         directory.0.join("persistent/state.db"),
+         directory.0.join("persistent/meridian.db"),
+         directory.0.join("persistent/meridian.db"),
       ),
    ] {
       directory.set_database_path(Some(&path));
@@ -250,8 +250,8 @@ fn windows_defaults_use_local_app_data() {
       .arg("status")
       .output()
       .unwrap();
-   assert_database_path(&output, &local_app_data.join("Meridian/state.db"));
-   assert!(!local_app_data.join("Meridian/state.db").exists());
+   assert_database_path(&output, &local_app_data.join("Meridian/meridian.db"));
+   assert!(!local_app_data.join("Meridian/meridian.db").exists());
 }
 
 #[cfg(target_os = "linux")]
@@ -274,7 +274,7 @@ fn linux_config_defaults_use_absolute_xdg_config_home_or_home() {
          command.env("XDG_CONFIG_HOME", path);
       }
       let output = command.arg("status").output().unwrap();
-      assert_database_path(&output, &config_directory.join("state.db"));
+      assert_database_path(&output, &config_directory.join("meridian.db"));
       // Each case must find its own configuration, even after a fallback case
       // ran.
       fs::remove_file(config_directory.join("config.json")).unwrap();
@@ -288,12 +288,12 @@ fn linux_database_defaults_use_absolute_xdg_state_home_or_home() {
    directory.set_database_path(None);
    let home = directory.0.join("user home");
    let custom = directory.0.join("custom state");
-   let fallback = home.join(".local/state/meridian/state.db");
+   let fallback = home.join(".local/state/meridian/meridian.db");
    for (xdg, expected) in [
       (None, fallback.clone()),
       (Some(Path::new("")), fallback.clone()),
       (Some(Path::new("relative")), fallback),
-      (Some(custom.as_path()), custom.join("meridian/state.db")),
+      (Some(custom.as_path()), custom.join("meridian/meridian.db")),
    ] {
       let mut command = directory.status();
       command.env("HOME", &home);

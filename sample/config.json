@@ -1,6 +1,6 @@
 {
   "credentialsFile": "sample/secrets.json",
-  "databasePath": "state.db",
+  "databasePath": "meridian.db",
   "games": [
     {
       "name": "Example Game",

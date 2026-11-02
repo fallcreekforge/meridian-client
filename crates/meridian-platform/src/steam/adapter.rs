@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use meridian_credential_store::CredentialStore;
 
-use super::api::SteamClient;
+use super::SteamClient;
 use crate::{
    Ingest,
    Platform,

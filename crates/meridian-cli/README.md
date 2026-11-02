@@ -28,7 +28,7 @@ or creating the database or its parent directories. See
 | Default | Windows (per user) | Linux (per user) |
 | --- | --- | --- |
 | Configuration | `%LOCALAPPDATA%\Meridian\config.json` | `$XDG_CONFIG_HOME/meridian/config.json` (fallback: `$HOME/.config/meridian/config.json`) |
-| SQLite state | `%LOCALAPPDATA%\Meridian\state.db` | `$XDG_STATE_HOME/meridian/state.db` (fallback: `$HOME/.local/state/meridian/state.db`) |
+| SQLite state | `%LOCALAPPDATA%\Meridian\meridian.db` | `$XDG_STATE_HOME/meridian/meridian.db` (fallback: `$HOME/.local/state/meridian/meridian.db`) |
 
 Default paths are relative to the corresponding user directory. Path resolution uses
 `LOCALAPPDATA` on Windows, or `XDG_CONFIG_HOME` and `XDG_STATE_HOME` with the `HOME` fallbacks on Linux.

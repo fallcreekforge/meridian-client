@@ -44,9 +44,9 @@ Linux default ───────────► $XDG_CONFIG_HOME/meridian/con
 Windows default ─────────► %LOCALAPPDATA%\Meridian\config.json
 
 databasePath supplied ───► absolute path or path relative to configuration directory
-Linux database default ──► $XDG_STATE_HOME/meridian/state.db
-                           (fallback: $HOME/.local/state/meridian/state.db)
-Windows database default ► %LOCALAPPDATA%\Meridian\state.db
+Linux database default ──► $XDG_STATE_HOME/meridian/meridian.db
+                           (fallback: $HOME/.local/state/meridian/meridian.db)
+Windows database default ► %LOCALAPPDATA%\Meridian\meridian.db
 ```
 
 The non-secret configuration lists games by name with explicit platforms per game.
@@ -66,7 +66,7 @@ the client does not implement those requests or collection behavior.
 
 ```text
 SyncEngine ──► Producer::poll ──► SteamSource (unimplemented collection)
-                                  ├── owns SteamClient marker
+                                  ├── owns steam::SteamClient marker
                                   └── owns Ingest marker
 ```
 
