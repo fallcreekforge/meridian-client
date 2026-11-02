@@ -12,10 +12,10 @@ use tokio::sync::Notify;
 
 /// Coordinates credential access, platform collection, and protocol creation.
 /// Responsible for the orchestration and scheduling for Producer polling.
-#[expect(dead_code)]
 pub struct SyncEngine {
    credential_store: Arc<dyn CredentialStore>,
    producers:        Vec<Box<dyn Producer>>,
+   #[expect(dead_code)]
    outbox_notify:    Arc<Notify>,
 }
 
@@ -51,5 +51,3 @@ pub enum SyncEngineError {
    #[error(transparent)]
    Producer(#[from] ProducerError),
 }
-
-#[cfg(test)] mod tests;

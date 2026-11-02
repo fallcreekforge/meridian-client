@@ -1,8 +1,5 @@
 use async_trait::async_trait;
-use meridian_credential_store::{
-   CredentialKey,
-   CredentialStore,
-};
+use meridian_credential_store::CredentialStore;
 
 use super::api::SteamClient;
 use crate::{
@@ -35,11 +32,7 @@ impl Producer for SteamSource {
       Platform::Steam
    }
 
-   async fn poll(&self, credentials: &dyn CredentialStore) -> Result<(), ProducerError> {
-      let publisher = credentials.get(CredentialKey::SteamPublisher);
-      let _financial = credentials.get(CredentialKey::SteamFinancial);
-
-      let _games = self.client.discover_games(publisher).await?;
+   async fn poll(&self, _credentials: &dyn CredentialStore) -> Result<(), ProducerError> {
       todo!()
    }
 }

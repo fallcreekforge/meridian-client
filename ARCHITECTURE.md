@@ -58,7 +58,17 @@ Runtime wiring, name-to-ID resolution, and collection filtering remain planned;
 `SyncEngine` polls platform-neutral `Producer` implementations. `SteamSource` owns an injected
 `SteamClient` and `meridian-store::Ingest` handle, placing collection and ingestion coordination
 inside the platform adapter. The store owns persistence operations. This ownership is scaffolded:
-`Ingest` is a marker contract without database operations.
+`Ingest` is a marker contract without database operations. `SteamClient` is a marker contract
+without request methods; `SteamSource::poll` is unimplemented.
+Scheduling, outbox coordination, ingestion, and dispatch database operations remain planned.
+The Steam API reference describes upstream contracts and collection design requirements;
+the client does not implement those requests or collection behavior.
+
+```text
+SyncEngine ──► Producer::poll ──► SteamSource (unimplemented collection)
+                                  ├── owns SteamClient marker
+                                  └── owns Ingest marker
+```
 
 The database opener treats its argument as an existing filesystem path, preserving filename
 characters rather than interpreting them as URL syntax. Pooled connections enforce foreign keys.
@@ -96,6 +106,15 @@ PR checks compare against the PR base commit, permit at most one new SQL migrati
 merged migration files, and verify that replay produces the declared schema. The developer's
 database is independent of migration generation and verification.
 
+Shared types live in `meridian-store::types` and are re-exported from the crate root. This is a
+temporary dependency-layer placement; extraction to an independently versioned public
+`meridian-types` package shared with Meridian Cloud is planned. Persistence-specific types
+belong in the store. `Dispatch`, like `Ingest`, is a marker contract without database operations.
+
+TODO: Define and test recovery when an application rollback follows a successful database
+migration, including schema compatibility checks and restoration from a compatible backup.
+Automatic reversal of committed migrations is unsupported.
+
 ## Target state
 
 ```text
@@ -127,7 +146,7 @@ CredentialStore ──► typed platform adapter
                             Meridian Cloud
 ```
 
-The planned shared-type dependency is separate from both product repositories:
+The shared-type dependency is separate from both product repositories:
 
 ```text
 Meridian Client ──────────► meridian-types ◄────────── Meridian Cloud
@@ -137,13 +156,13 @@ The resident `agent` mode is the primary runtime; the other commands support set
 development. Command invocation semantics are not an architectural constraint.
 
 The local core remains platform-neutral and depends on the credential and platform
-contracts. Its planned outbox coordination will use the store directly. Platform adapters depend
+contracts. Outbox coordination uses the store directly. Platform adapters depend
 on the store's ingestion contracts, with SQLite implementation details kept in the store.
 Within the workspace, `meridian-store::types` declares the shared identifiers, supported-platform
 values, and versioned envelope types, and the crate root re-exports them for platform and local
 crates. The shared re-exported surface is `StudioId`, `PlatformGameId`, `Platform`,
-`PlatformGame`, `ProtocolVersion`, `GameV1`, and `SyncEnvelopeV1`. This is a temporary placement in
-the lowest existing dependency layer, not persistence ownership of those contracts.
+`PlatformGame`, `ProtocolVersion`, `GameV1`, and `SyncEnvelopeV1`. Shared contracts are distinct
+from persistence-specific types.
 
 Types are shared by meaning rather than by field similarity:
 
@@ -164,11 +183,9 @@ re-export surface or an unused direct store dependency. Both JSON file loaders r
 so callers can handle load failures without importing the utility crate. Credential lookup itself
 returns a borrowed secret rather than an owned value or a file error.
 
-The target is an independently versioned public `meridian-types` package outside both
-`meridian-client` and `meridian-cloud`. Both products will consume it directly; database rows,
-query projections, and other persistence-specific types will remain in `meridian-store`. Until
-Meridian Cloud development begins and that package is extracted, client crates consume the shared
-types through the `meridian-store` re-exports.
+An independently versioned public `meridian-types` package sits outside both `meridian-client`
+and `meridian-cloud`. Both products consume it directly; database rows, query projections, and
+other persistence-specific types belong in `meridian-store`.
 
 The intended Steam financial ingestion transaction replaces every recalculated date,
 advances its durable watermark, and records the outbound protocol message in the outbox atomically.

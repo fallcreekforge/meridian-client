@@ -40,9 +40,9 @@ pub use types::{
 
 /// `Outbox` is responsible for schema migrations
 /// along with providing Ingestion and Dispatch handles.
-#[cfg_attr(not(test), expect(dead_code))]
 pub struct Outbox {
    // combined_collector: CombinedCollector,
+   #[cfg_attr(not(test), expect(dead_code))]
    pool: SqlitePool,
 }
 
