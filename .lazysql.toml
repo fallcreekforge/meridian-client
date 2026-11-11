@@ -1,0 +1,6 @@
+# Open the development database from the repository root.
+# Initialize a new development database with `just db-init`.
+[[database]]
+Name     = "Meridian development"
+Provider = "sqlite3"
+URL      = "file:.local/meridian.db?mode=rw&_pragma=foreign_keys(1)"

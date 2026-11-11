@@ -7,10 +7,19 @@
       url = "github:nix-community/fenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    git-hooks = {
+      url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
-    { nixpkgs, fenix, ... }:
+    {
+      nixpkgs,
+      fenix,
+      git-hooks,
+      ...
+    }:
     let
       ciSystem = "x86_64-linux";
       developmentSystems = [
@@ -32,6 +41,54 @@
           "rustc"
         ];
       rustfmtFor = system: fenix.packages.${system}.complete.withComponents [ "rustfmt" ];
+      hooksFor =
+        system:
+        let
+          pkgs = pkgsFor system;
+          rustToolchain = rustToolchainFor system;
+          clippy = pkgs.writeScriptBin "meridian-clippy" ''
+            #!${pkgs.nushell}/bin/nu
+            $env.PATH = ($env.PATH | prepend "${rustToolchain}/bin" | prepend "${pkgs.stdenv.cc}/bin")
+            $env.CLIPPY_CONF_DIR = $env.PWD
+            ^${rustToolchain}/bin/cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+          '';
+        in
+        git-hooks.lib.${system}.run {
+          src = ./.;
+          hooks = {
+            rustfmt = {
+              enable = true;
+              packageOverrides = {
+                cargo = rustToolchain;
+                rustfmt = rustfmtFor system;
+              };
+            };
+            clippy = {
+              enable = true;
+              package = clippy;
+              entry = "${clippy}/bin/meridian-clippy";
+              files = "\\.rs$|(^|/)(Cargo\\.(toml|lock)|clippy\\.toml|rust-toolchain\\.toml)$";
+            };
+            nixfmt.enable = true;
+            statix.enable = true;
+            taplo = {
+              enable = true;
+              args = [
+                "--config"
+                "taplo.toml"
+              ];
+            };
+            sqlfluff = {
+              enable = true;
+              name = "SQLFluff";
+              package = pkgs.sqlfluff;
+              entry = "${pkgs.sqlfluff}/bin/sqlfluff fix";
+              files = "^crates/.*\\.sql$";
+              excludes = [ "^crates/meridian-store/migrations/" ];
+            };
+            actionlint.enable = true;
+          };
+        };
       rustPlatformFor =
         system:
         let
@@ -134,6 +191,7 @@
           rustPlatform = rustPlatformFor ciSystem;
           rustToolchain = rustToolchainFor ciSystem;
           rustfmt = rustfmtFor ciSystem;
+          hooks = hooksFor ciSystem;
         in
         pkgs.stdenv.mkDerivation {
           pname = "meridian-client-repository-quality";
@@ -143,19 +201,16 @@
           cargoDeps = rustPlatform.importCargoLock {
             lockFile = ./Cargo.lock;
           };
-          nativeBuildInputs = [
-            pkgs.actionlint
-            pkgs.just
-            pkgs.nixfmt
-            pkgs.nushell
-            pkgs.statix
-            pkgs.taplo
+          nativeBuildInputs = hooks.enabledPackages ++ [
+            pkgs.git
+            hooks.config.package
             rustPlatform.cargoSetupHook
             rustToolchain
             rustfmt
           ];
           strictDeps = true;
           dontConfigure = true;
+          dontUsePytestCheck = true;
 
           buildPhase = ''
             runHook preBuild
@@ -163,10 +218,10 @@
             export CLIPPY_CONF_DIR="$PWD"
             export RUSTFMT="${rustfmt}/bin/rustfmt"
             export TAPLO_CONFIG="$PWD/taplo.toml"
-            just fmt lint nix-fmt nix-lint toml-fmt
-            if [ -f .github/workflows/windows.yml ]; then
-              just gha-lint
-            fi
+            export PRE_COMMIT_HOME="$TMPDIR/pre-commit"
+            git init --quiet
+            git add .
+            pre-commit run --all-files --config ${hooks.config.configFile}
 
             runHook postBuild
           '';
@@ -214,6 +269,7 @@
           pkgs = pkgsFor system;
           rustToolchain = rustToolchainFor system;
           rustfmt = rustfmtFor system;
+          hooks = hooksFor system;
           clippyConfDir = pkgs.linkFarm "meridian-clippy-configuration" {
             "clippy.toml" = ./clippy.toml;
           };
@@ -242,6 +298,7 @@
               pkgs.atlas
               pkgs.sqlite
               pkgs.nixfmt
+              pkgs.sqlfluff
               pkgs.stdenv.cc
               pkgs.statix
               pkgs.cargo-deny
@@ -250,7 +307,9 @@
               pkgs.cargo-nextest
               pkgs.evcxr
               pkgs.taplo
-            ];
+            ]
+            ++ hooks.enabledPackages
+            ++ [ hooks.config.package ];
 
             CARGO_NET_GIT_FETCH_WITH_CLI = "true";
             CLIPPY_CONF_DIR = "${clippyConfDir}";
@@ -258,15 +317,7 @@
             TAPLO_CONFIG = "${./taplo.toml}";
 
             shellHook = ''
-              if [ "$(git rev-parse --show-toplevel 2>/dev/null)" = "$PWD" ] && [ -f .githooks/pre-commit ]; then
-                hooks_path=$(git config --get core.hooksPath || true)
-                if [ -z "$hooks_path" ]; then
-                  just hooks-install
-                elif [ "$hooks_path" != ".githooks" ]; then
-                  echo "Preserving custom Git hooks path: $hooks_path"
-                  echo "Run 'just hooks-install' to enable this repository's hooks."
-                fi
-              fi
+              ${hooks.shellHook}
 
               # Make an interactive development shell Nushell by default. The
               # TTY check preserves `nix develop -c <command>` for automation.
