@@ -1,13 +1,8 @@
 set shell := ["nu", "-c"]
 
-# Enable repository Git hooks for this checkout.
-hooks-install:
-   git config --local core.hooksPath .githooks
-
-# Fix SQL, stop for review if it changes, then run formatting and lint checks.
+# Run all configured Git hooks across the working tree.
 pre-commit:
-   nu scripts/sql-pre-commit.nu
-   just fmt lint nix-fmt nix-lint toml-fmt sql-lint gha-lint
+   pre-commit run --all-files
 
 # Check Rust formatting without changing files.
 fmt:
@@ -91,7 +86,7 @@ db-migrations-check $base="origin/main":
    nu scripts/database-migrations.nu check $env.base
 
 # Run workflow validation and all Nix CI checks.
-ci: gha-lint
+ci:
    nix flake check --print-build-logs
 
 # Run the CLI with the supplied arguments.

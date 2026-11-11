@@ -10,18 +10,21 @@ just ci
 The development shell includes the SQLite CLI (`sqlite3`) for inspecting local databases and
 trying schema changes.
 
-Entering the development shell from the repository root enables the tracked Git hooks in
-`.githooks`. An existing custom hooks path is preserved; run `just hooks-install` to select
-the repository hooks explicitly.
+Entering the development shell installs Git hooks through git-hooks.nix. Hook definitions and
+tool versions come from `flake.nix` and `flake.lock`; `.pre-commit-config.yaml` is generated
+and ignored by Git. The installed hooks use Nix store executables without entering a new shell
+for each commit.
 
-The pre-commit hook enters the pinned development environment and runs `just pre-commit`.
-It first applies automatic SQLFluff fixes to standalone SQL in the working tree, including
-unstaged changes. If any files change, the hook stops so you can review and stage them before
-retrying the commit. The hook does not stage files automatically.
-When SQL needs no fixes, it checks Rust formatting and Clippy, Nix formatting and linting,
-TOML formatting, SQL linting, and workflow linting without rewriting files.
-Run `just pre-commit` to run this workflow manually. Tests and package builds run through `just ci`.
-Git hooks provide local feedback; CI enforces the repository gate independently.
+At commit time, pre-commit selects hooks by the staged file paths and temporarily sets aside
+unstaged edits to tracked files. Formatters apply Rust, Nix, TOML, and SQL fixes; Clippy,
+Statix, and actionlint report errors. Rust formatting and Clippy operate on the workspace.
+If a formatter changes files, the hook stops so you can review and stage the changes before
+retrying the commit. Hooks do not stage files automatically.
+
+Run `just pre-commit` to run all hooks across the working tree, including unstaged changes.
+`just ci` runs the same hook definitions against the whole repository in the Nix build sandbox,
+alongside tests and package builds. Git hooks provide local feedback; CI enforces the repository
+gate independently.
 
 SQLFluff checks standalone SQL files with the SQLite dialect. Align column data types within
 each table, use four-space indentation, and use single spaces elsewhere. SQLFluff enforces
