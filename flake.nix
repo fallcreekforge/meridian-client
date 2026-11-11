@@ -148,6 +148,7 @@
             pkgs.just
             pkgs.nixfmt
             pkgs.nushell
+            pkgs.sqlfluff
             pkgs.statix
             pkgs.taplo
             rustPlatform.cargoSetupHook
@@ -163,7 +164,7 @@
             export CLIPPY_CONF_DIR="$PWD"
             export RUSTFMT="${rustfmt}/bin/rustfmt"
             export TAPLO_CONFIG="$PWD/taplo.toml"
-            just fmt lint nix-fmt nix-lint toml-fmt
+            just fmt lint nix-fmt nix-lint toml-fmt sql-lint
             if [ -f .github/workflows/windows.yml ]; then
               just gha-lint
             fi
@@ -242,6 +243,7 @@
               pkgs.atlas
               pkgs.sqlite
               pkgs.nixfmt
+              pkgs.sqlfluff
               pkgs.stdenv.cc
               pkgs.statix
               pkgs.cargo-deny

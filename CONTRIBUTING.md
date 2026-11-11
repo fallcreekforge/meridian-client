@@ -14,11 +14,21 @@ Entering the development shell from the repository root enables the tracked Git 
 `.githooks`. An existing custom hooks path is preserved; run `just hooks-install` to select
 the repository hooks explicitly.
 
-The pre-commit hook enters the pinned development environment and runs `just pre-commit`:
-Rust formatting and Clippy, Nix formatting and linting, TOML formatting, and workflow linting.
-These checks inspect the working tree, including unstaged changes, and do not rewrite files.
-Run `just pre-commit` to check them manually. Tests and package builds run through `just ci`.
+The pre-commit hook enters the pinned development environment and runs `just pre-commit`.
+It first applies automatic SQLFluff fixes to standalone SQL in the working tree, including
+unstaged changes. If any files change, the hook stops so you can review and stage them before
+retrying the commit. The hook does not stage files automatically.
+When SQL needs no fixes, it checks Rust formatting and Clippy, Nix formatting and linting,
+TOML formatting, SQL linting, and workflow linting without rewriting files.
+Run `just pre-commit` to run this workflow manually. Tests and package builds run through `just ci`.
 Git hooks provide local feedback; CI enforces the repository gate independently.
+
+SQLFluff checks standalone SQL files with the SQLite dialect. Align column data types within
+each table, use four-space indentation, and use single spaces elsewhere. SQLFluff enforces
+the alignment through its layout configuration. Run `just sql-lint` to check files and
+`just sql-fix` to apply automatic formatting and lint fixes. SQL embedded in Rust
+strings is outside this check. Atlas-generated migrations are excluded to preserve their
+checksums and immutable history; migration policy and replay have separate checks.
 
 `just ci` runs the repository gate defined by the flake. Keep CI agent, cache, and signing
 credentials out of the repository.

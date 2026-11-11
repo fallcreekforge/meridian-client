@@ -19,6 +19,11 @@ Post-release migrations are forward-only and non-destructive.
 Edit [`schema.sql`](schema.sql) as the declarative development schema. Versioned SQL migrations
 and their checksum file belong in [`migrations/`](migrations/).
 
+Run `just db-schema-check` to load the declarative schema into an in-memory SQLite database with
+foreign keys enabled and reject SQL errors or foreign-key violations. An optional schema file
+argument supports checking another SQL file. This check does not create or modify a database file;
+constraint behavior for collected records requires data-level tests.
+
 From the repository root inside the development shell, use `.local/meridian.db` as the
 development database. Git ignores `.local/`, including SQLite journal and WAL files.
 
